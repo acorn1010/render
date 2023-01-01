@@ -1,0 +1,53 @@
+---
+hetzner_token: $HETZNER_TOKEN
+cluster_name: acorn1010
+# Currently necessary to define the existing network outside of EU because of this line:
+# https://github.com/vitobotta/hetzner-k3s/blob/main/src/hetzner/network/create.cr#L42
+existing_network: acorn1010
+
+kubeconfig_path: "./kubeconfig"
+k3s_version: v1.21.3+k3s1
+public_ssh_key_path: "~/.ssh/id_rsa.pub"
+private_ssh_key_path: "~/.ssh/id_rsa.pem"
+ssh_allowed_networks:
+  - 0.0.0.0/0
+api_allowed_networks:
+  - 0.0.0.0/0
+
+schedule_workloads_on_masters: false
+masters_pool:
+  instance_type: cpx21
+  instance_count: 1
+  # Valid locations:
+  # Germany: nbg1, fsn1
+  # Finland: hel1
+  # US West: hil
+  # US East: ash
+  location: hil
+  # labels:
+  #   purpose: master
+  #   size: cpx21
+  # taints:
+  #   something: value1:NoSchedule
+worker_node_pools:
+- name: small
+  instance_type: cpx21
+  instance_count: 3
+  location: hil
+  # labels:
+  #   purpose: worker
+  #   size: cpx21
+  # taints:
+  #   something: GpuWorkloadsOnly:NoSchedule
+#- name: big
+#  instance_type: cpx31
+#  instance_count: 2
+#  location: hil
+additional_packages:
+#- somepackage
+post_create_commands:
+- apt update
+- apt upgrade -y
+- apt autoremove -y
+- shutdown -r now
+enable_encryption: true

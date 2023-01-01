@@ -7,6 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+kubeconfig
+k3s-releases.yaml
+
 node_modules
 dist
 dist-ssr
