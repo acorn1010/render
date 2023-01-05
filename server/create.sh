@@ -4,39 +4,81 @@ set -e
 # Creates a K8 cluster on Hetzner. For configuration, look at fleet.yaml.
 # See: https://github.com/vitobotta/hetzner-k3s
 
-# Prerequisites
-# sudo apt-get install libssh2-1-dev libevent-dev
-# wget https://github.com/vitobotta/hetzner-k3s/releases/download/v0.6.7/hetzner-k3s-linux-x86_64
-# chmod +x hetzner-k3s-linux-x86_64
-# sudo mv hetzner-k3s-linux-x86_64 /usr/local/bin/hetzner-k3s
+# Error out if dependencies aren't installed.
+if [[ ! -f "$(which hetzner-k3s)" ]] ; then
+  LIGHT_RED='\033[1;31m'
+  LIGHT_CYAN='\033[1;36m'
+  echo -e "${LIGHT_RED}hetzner-k3s is not installed. Install it with the following commands:"
+  echo -e "${LIGHT_CYAN}  wget https://github.com/vitobotta/hetzner-k3s/releases/download/v1.0.2/hetzner-k3s-linux-x86_64"
+  echo "  chmod +x hetzner-k3s-linux-x86_64"
+  echo "  sudo mv hetzner-k3s-linux-x86_64 /usr/local/bin/hetzner-k3s"
+  exit 1
+fi
 
-echo "Creating cluster."
+echo "Creating cluster..."
 
+# Load environment variables
 . .env
 export HETZNER_TOKEN="${HETZNER_TOKEN}"
+export CLUSTER_NAME="${CLUSTER_NAME}"
+export CLUSTER_LOCATION="${CLUSTER_LOCATION}"
+export MASTERS_POOL_SIZE="${MASTERS_POOL_SIZE}"
+export WORKERS_POOL_SIZE="${WORKERS_POOL_SIZE}"
+export WORKERS_INSTANCE_TYPE="${WORKERS_INSTANCE_TYPE}"
 hetzner-k3s create --config <(envsubst < ./fleet.yaml)
+
+# Copy kubeconfig to ~/.kube/config directory, backing up the old one if it exists
+export KUBECONFIG=./kubeconfig
+if [[ -f ~/.kube/config ]]; then
+  BACKUP_CONFIG_PATH="$HOME/.kube/config.bak"
+  echo "Copying old ~/.kube/config to ${BACKUP_CONFIG_PATH}"
+  cp ~/.kube/config "${BACKUP_CONFIG_PATH}"
+fi
+cp ./kubeconfig ~/.kube/config
 
 # Once-off. If ran again, these are no-op
 helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 helm repo add jetstack https://charts.jetstack.io
-helm repo add traefik https://traefik.github.io/charts
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 # Update Helm chart repository cache
 helm repo update
 
+# Install the Ingress controller
+echo "Installing the ingress controller..."
+export RANCHER_HOSTNAME="${RANCHER_HOSTNAME}"
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  -f <(envsubst < ./ingress-nginx-annotations.yaml) \
+  --namespace ingress-nginx \
+  --create-namespace
+kubectl apply -f ./ingress-nginx-configmap.yaml
+
+# Install LetsEncrypt certificate manager
 # kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.10.1/cert-manager.crds.yaml
-helm install cert-manager jetstack/cert-manager \
+echo "Installing LetsEncrypt certificate manager..."
+helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
   --version v1.10.1 \
   --set installCRDs=true
+kubectl apply -f ./lets-encrypt.yaml
 
-helm install rancher rancher-stable/rancher \
+# Now that an Ingress controller is installed, we can install Rancher
+echo "Installing Rancher..."
+RANCHER_PASS=$(mktemp -u XXXXXXXXXX)
+helm upgrade --install rancher rancher-stable/rancher \
   --namespace cattle-system \
   --create-namespace \
-  --set hostname=rancher.acorn1010.com \
+  --set hostname="${RANCHER_HOSTNAME}" \
+  --set bootstrapPassword="${RANCHER_PASS}" \
+  --set ingress.ingressClassName=nginx \
   --set ingress.tls.source=letsEncrypt \
-  --set letsEncrypt.email=admin@foony.com \
-  --set letsEncrypt.ingress.class=traefik
+  --set letsEncrypt.email="${LETSENCRYPT_EMAIL}" \
+  --set letsEncrypt.ingress.class=nginx
 
-# Add traefik so we can access Rancher externally.
-helm install traefik traefik/traefik --namespace traefik --create-namespace
+COLOR_OFF='\033[0m'
+CYAN_UNDERLINE='\033[4;36m'
+echo "Finished setting up K8."
+echo -e "You will need to visit ${CYAN_UNDERLINE}https://console.hetzner.cloud/projects/${COLOR_OFF} and find your Load Balancer's Public IP"
+echo "Set this Public IP as an A record in your DNS for ${RANCHER_HOSTNAME}"
+echo ""
+echo -e "Once your DNS has propagated, continue setting up Rancher here: ${CYAN_UNDERLINE}https://${RANCHER_HOSTNAME}/dashboard/?setup=${RANCHER_PASS}${COLOR_OFF}"
