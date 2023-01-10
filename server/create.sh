@@ -62,6 +62,10 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set installCRDs=true
 kubectl apply -f ./lets-encrypt.yaml
 
+# Include GCP secret so that we can deploy containers to GCR.
+export GCR_SECRET="${GCR_SECRET}"
+envsubst < ./gcp-secret.yaml | kubectl apply -f -
+
 # Now that an Ingress controller is installed, we can install Rancher
 echo "Installing Rancher..."
 RANCHER_PASS=$(mktemp -u XXXXXXXXXX)

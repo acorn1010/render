@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prerender-deployment
+spec:
+  replicas: 1  # Number of servers. Increase as desired
+  selector:
+    matchLabels:
+      app: prerender-server
+  template:
+    metadata:
+      labels:
+        app: prerender-server
+    spec:
+      imagePullSecrets:
+        - name: gcr-io
+      containers:
+        - name: prerender-server
+          image: $DOCKER_IMAGE
+          imagePullPolicy: Always
+          # Limit game server resources. If this isn't enough for 1,000 players then we can
+          # increase it later.
+          resources:
+            requests:
+              cpu: "500m"  # Request 0.5 vCPUs.
+              memory: "1Gi"  # Request 1 GiB of RAM
+          ports:
+          - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prerender-service
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: prerender-server
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prerender-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: render.acorn1010.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prerender-service
+                port:
+                  number: 3000
