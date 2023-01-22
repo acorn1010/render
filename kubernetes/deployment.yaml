@@ -64,6 +64,8 @@ metadata:
   namespace: $NAMESPACE
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/tls-acme: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -77,3 +79,6 @@ spec:
                 name: ${NAMESPACE}-service
                 port:
                   number: 3000
+  tls:
+    - hosts:
+        - $HOST
