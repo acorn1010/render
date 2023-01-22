@@ -62,6 +62,15 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set installCRDs=true
 kubectl apply -f ./lets-encrypt.yaml
 
+# Wait for the Ingress controller to start
+# TODO(acorn1010): Improve this. Is it possible to use `kubectl -n ingress-nginx rollout status` here?
+INGRESS_NGINX_STATUS=$(kubectl get pods --namespace=ingress-nginx | grep "1/");
+while [ ! "${INGRESS_NGINX_STATUS}" ]; do
+  echo "Waiting for Ingress Controller to finish starting up...";
+  sleep 2;
+  INGRESS_NGINX_STATUS=$(kubectl get pods --namespace=ingress-nginx | grep "1/");
+done
+
 # Include GCP secret so that we can deploy containers to GCR.
 export GCR_SECRET="${GCR_SECRET}"
 envsubst < ./gcp-secret.yaml | kubectl apply -f -

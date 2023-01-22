@@ -1,0 +1,70 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $NAMESPACE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${NAMESPACE}-deployment
+  namespace: $NAMESPACE
+spec:
+  replicas: $REPLICAS  # Number of servers. Increase as desired
+  selector:
+    matchLabels:
+      app: ${NAMESPACE}-server
+  template:
+    metadata:
+      labels:
+        app: ${NAMESPACE}-server
+    spec:
+      imagePullSecrets:
+        - name: gcr-io
+      containers:
+        - name: ${NAMESPACE}-server
+          image: $DOCKER_IMAGE
+          imagePullPolicy: Always
+          # Limit game server resources. If this isn't enough for 1,000 players then we can
+          # increase it later.
+          resources:
+            requests:
+              cpu: $CPU  # Request 0.5 vCPUs.
+              memory: $MEMORY  # Request 1 GiB of RAM
+          ports:
+          - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${NAMESPACE}-service
+  namespace: $NAMESPACE
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: ${NAMESPACE}-server
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${NAMESPACE}-ingress
+  namespace: $NAMESPACE
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: $HOST
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ${NAMESPACE}-service
+                port:
+                  number: 3000

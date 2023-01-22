@@ -19,8 +19,8 @@ WORKDIR /usr/src/app/server
 # Configure the base npm application
 # Instead of a simple command like COPY ./server ./server/, we split this into multiple commands in
 # order to ignore the node_modules library (for some reason .dockerignore is being ignored).
-COPY ./src/index.js ./src/server.js ./src/package.json ./src/package-lock.json ./
-COPY ./src/lib ./lib
+COPY ./tsconfig.json ./package.json ./package-lock.json ./
+COPY ./lib ./lib
 
 # TODO(acorn1010): Figure out why COPY isn't copying as pptruser.
 RUN chown -R pptruser:pptruser /usr/src/app/server
@@ -28,7 +28,8 @@ USER pptruser
 
 RUN npm install
 
-ENTRYPOINT ["npm", "start"]
+CMD ["sleep", "6000000"]
+# ENTRYPOINT ["npm", "start"]
 
 # Expose Ports.
 EXPOSE 3000
