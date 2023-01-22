@@ -4,6 +4,15 @@ kind: Namespace
 metadata:
   name: $NAMESPACE
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcr-io
+  namespace: $NAMESPACE
+data:
+  .dockerconfigjson: $GCR_SECRET
+type: kubernetes.io/dockerconfigjson
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

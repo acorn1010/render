@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
+# This is the only section you should modify if creating a new deployment.
+# TODO(acorn1010): Move the rest of this script into the kubernetes/ folder
+export HOST="render.acorn1010.com"
+export NAMESPACE="prerender"
+export REPLICAS=1  # Number of server instances to spin up
+export CPU="500m"  # Request 0.5 vCPUs
+export MEMORY="1Gi"  # Request 1 GiB of RAM
+
+# EVERYTHING BELOW THIS LINE SHOULD STAY THE SAME ACROSS ALL DEPLOYMENTS.
 echo "Deploying server."
 
 # Source environment variables (needed for $PROJECT_ID)
@@ -24,9 +33,6 @@ docker push ${DOCKER_IMAGE}:latest
 
 # Replace environment variables in fleet.yaml and update our fleet with the latest image.
 export DOCKER_IMAGE="${DOCKER_IMAGE}:${VERSION}"
-export HOST="render.acorn1010.com"
-export NAMESPACE="prerender"
-export REPLICAS=1  # Number of server instances to spin up
-export CPU="500m"  # Request 0.5 vCPUs
-export MEMORY="1Gi"  # Request 1 GiB of RAM
+export GCR_SECRET="${GCR_SECRET}"  # Needed so that K3s can pull the docker image
+
 envsubst < ../kubernetes/deployment.yaml | kubectl apply -f -
