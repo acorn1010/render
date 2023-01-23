@@ -25,6 +25,7 @@ export CLUSTER_LOCATION="${CLUSTER_LOCATION}"
 export MASTERS_POOL_SIZE="${MASTERS_POOL_SIZE}"
 export WORKERS_POOL_SIZE="${WORKERS_POOL_SIZE}"
 export WORKERS_INSTANCE_TYPE="${WORKERS_INSTANCE_TYPE}"
+export LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL}"
 hetzner-k3s create --config <(envsubst < ./fleet.yaml)
 
 # Copy kubeconfig to ~/.kube/config directory, backing up the old one if it exists
@@ -60,7 +61,7 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --create-namespace \
   --version v1.10.1 \
   --set installCRDs=true
-kubectl apply -f ./lets-encrypt.yaml
+envsubst < ./lets-encrypt.yaml | kubectl apply -f -
 
 # Wait for the Ingress controller to start
 # TODO(acorn1010): Improve this. Is it possible to use `kubectl -n ingress-nginx rollout status` here?

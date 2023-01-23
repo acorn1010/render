@@ -1,8 +1,8 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
+  # Note: ClusterIssuer isn't supposed to be in a namespace
   name: letsencrypt-prod
-  namespace: cert-manager
 spec:
   acme:
     # You must replace this email address with your own.
