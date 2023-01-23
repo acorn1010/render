@@ -142,5 +142,7 @@ function prerenderRequest(request) {
         redirect: 'manual',
     });
 
-    return fetch(prerenderRequest);
+    // Cache for 7 days
+    // See: https://developers.cloudflare.com/workers/runtime-apis/request/#requestinitcfproperties
+    return fetch(prerenderRequest, {cf: {cacheTtl: 7 * 24 * 60 * 60 }});
 }
