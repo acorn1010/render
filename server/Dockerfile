@@ -28,8 +28,7 @@ USER pptruser
 
 RUN npm install
 
-CMD ["sleep", "6000000"]
-# ENTRYPOINT ["npm", "start"]
+ENTRYPOINT ["npm", "start"]
 
 # Expose Ports.
 EXPOSE 3000
