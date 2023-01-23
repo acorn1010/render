@@ -28,3 +28,5 @@ server/.env
 *.njsproj
 *.sln
 *.sw?
+
+server/lib

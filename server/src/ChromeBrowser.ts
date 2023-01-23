@@ -1,16 +1,22 @@
 import puppeteer, {BrowserContext} from "puppeteer";
 
 type RenderResponse = {
-  html: string,
   responseHeaders: Record<string, string>,
   /** Response status code (e.g. 200 for success) */
   statusCode: 200 | 404 | number,
-};
+} & ({
+  type: 'html',
+  html: string,
+} | {
+  type: 'buffer',
+  buffer: Uint8Array,
+});
 export async function render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
   // TODO(acorn1010): Optimize this. Persist the browser between requests, closing pages as necessary.
   const browser = await puppeteer.launch({
     args: ['--hide-scrollbars', '--disable-gpu'],
-    defaultViewport: {width: 1024, height: 768},
+    defaultViewport: {width: 1024, height: 768},  // phone layout 375 x 667
+    ignoreHTTPSErrors: true,
   });
   const [context, originalUserAgent]: [BrowserContext, string] = await Promise.all([
     browser.createIncognitoBrowserContext(),
@@ -31,9 +37,14 @@ export async function render(url: string, requestHeaders: Record<string, string>
       // ]);
 
       const response = await page.goto(url);
-      const html = await page.evaluate(() => document.body.innerHTML);
-      console.log(html, {response});
-      return {html, statusCode: response?.status() ?? 400, responseHeaders: response?.headers?.() ?? {}};
+      const html = await page.content(); // await page.evaluate(() => document.);
+      const responseHeaders = response?.headers() ?? {};
+      const statusCode = response?.status() ?? 400;
+      if (response && !responseHeaders['content-type']?.includes('text/html')) {
+        const buffer = await response.buffer() as Uint8Array;  // TODO(acorn1010): Why is this cast necessary?
+        return {type: 'buffer', buffer, statusCode, responseHeaders};
+      }
+      return {type: 'html', html, statusCode, responseHeaders};
     } finally {
       // Swallow page close errors. The browser might have already closed by this point.
       // page.close().catch(() => {}).then(() => {});

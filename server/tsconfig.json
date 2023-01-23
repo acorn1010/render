@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "module": "CommonJS",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "types": ["node"],
+    "sourceMap": true,
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib",
+    "resolveJsonModule": true,
+    "target": "ES2021",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {"@server/*": ["src/*"]}
+  },
+  "compileOnSave": true,
+  "include": [
+    "src/**/*"
+  ]
+}
