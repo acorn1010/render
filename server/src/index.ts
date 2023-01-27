@@ -22,16 +22,16 @@ app.get('*', async (req, res) => {
     res.status(400).send(JSON.stringify({error: 'Invalid URL. Example request: https://render.acorn1010.com/https://foony.com'}));
     return;
   }
-  // If this is not a full URL, then base the URL off of where it's requested from
+  // If this is not a full URL, then base the URL off of where it's requested from. This isn't
+  // really necessary and could be deleted without affecting the service. It's more for local
+  // development.
   if (url.indexOf('://') < 0) {
-    console.log('before URL', url);
     const referer = req.header('referer') || '';
     // From https://www.rfc-editor.org/rfc/rfc3986#page-51.
     // Given a referer of e.g. http://localhost:3000/https://example.com/foo/bar,
     // returns http://localhost:3000/https://example.com
     const baseReferer = referer.match(/((?:([^:\/?#]+):)?\/\/([^\/?#]*)\/(?:([^:\/?#]+):)?\/\/([^\/?#]*)).*/)?.[1];
-    url = baseReferer + '/' + url;
-    console.log('NEW URL', url);
+    url = (baseReferer ?? referer) + '/' + url;
   }
   console.log('Navigating to URL', url);
   const requestHeaders =
@@ -58,9 +58,12 @@ app.get('*', async (req, res) => {
       }
     }
     res.send(response.type === 'html' ? response.html : response.buffer);
-  } catch (e) {
+  } catch (e: any) {
     console.error('Unable to render URL.', e);
-    res.status(400).send(JSON.stringify({error: 'Invalid URL. Example request: https://render.acorn1010.com/https://foony.com'}));
+    res.status(400).send(
+        JSON.stringify(
+            {error: `Invalid URL. Got: "${url}". Example request: "https://render.acorn1010.com/https://foony.com". Error: ${e.message}`}
+        ));
   }
 });
 
