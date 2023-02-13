@@ -28,9 +28,9 @@ masters_pool:
 worker_node_pools:
 - name: workers
   instance_type: $WORKERS_INSTANCE_TYPE
-#  instance_count: $WORKERS_POOL_SIZE
+  instance_count: $WORKERS_POOL_SIZE
   autoscaling:
-    enabled: true
+    enabled: $AUTOSCALING_ENABLED
     min_instances: $WORKERS_POOL_SIZE_MIN
     max_instances: $WORKERS_POOL_SIZE_MAX
   location: $CLUSTER_LOCATION

@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis
+---
+apiVersion: databases.spotahome.com/v1
+kind: RedisFailover
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  sentinel:
+    replicas: 3
+  redis:
+    replicas: 3
+    storage:
+      keepAfterDeletion: true
+      persistentVolumeClaim:
+        metadata:
+          name: redisfailover-persistent-data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+    # TODO(acorn1010): Move to Redis Enterprise when we have at least 3+ nodes and a NAS for persistence
+    # https://docs.redis.com/latest/kubernetes/deployment/quick-start/
+    # Example config: https://github.com/spotahome/redis-operator/blob/fe8090ac7291ee53ac30e534fa1cc03e5759fd10/example/redisfailover/custom-config.yaml
+    customConfig:
+      - "appendonly yes"
+  auth:
+    secretPath: redis-secret
+---
+# This Service and the redisinsight below are only needed if a "dashboard" is wanted for Redis.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redisinsight
+  namespace: redis
+  labels:
+    app: redisinsight
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redisinsight
+  template:
+    metadata:
+      labels:
+        app: redisinsight
+    spec:
+      containers:
+        - name:  redisinsight
+          image: redislabs/redisinsight:1.13.1
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: db
+              mountPath: /db
+          ports:
+            - containerPort: 8001
+              protocol: TCP
+      volumes:
+        - name: db
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisinsight-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 8001
+  selector:
+    app: redisinsight

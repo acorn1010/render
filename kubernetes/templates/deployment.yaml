@@ -33,7 +33,7 @@ spec:
       containers:
         - name: ${NAMESPACE}-server
           image: $DOCKER_IMAGE
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           # Limit game server resources. If this isn't enough for 1,000 players then we can
           # increase it later.
           resources:
@@ -63,12 +63,11 @@ metadata:
   name: ${NAMESPACE}-ingress
   namespace: $NAMESPACE
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    kubernetes.io/tls-acme: "true"
 spec:
-  # ingressClassName: nginx
+  ingressClassName: nginx
   rules:
     - host: $HOST
       http:
