@@ -23,6 +23,7 @@ const BOT_AGENTS = [
     'google page speed',
     'googlebot',
     'linkedinbot',
+    'lynx/',
     'nuzzel',
     'outbrain',
     'pinterest/0.',
