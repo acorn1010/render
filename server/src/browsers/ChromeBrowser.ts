@@ -1,4 +1,5 @@
 import puppeteer, {Browser} from "puppeteer";
+import {RenderResponse} from "../db/Schema";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
@@ -52,6 +53,8 @@ class ChromeBrowserRunnerSingleton {
       await Promise.any(this.outstandingRequests);
     }
 
+    // TODO(acorn1010): Browser can crash if it fails to render here. Do we care? Can happen because
+    //  of 20s timeout.
     const request = this.renderPage(url, requestHeaders);
     this.outstandingRequests.push(request);
     request.finally(() => {
@@ -81,9 +84,21 @@ class ChromeBrowserRunnerSingleton {
       const statusCode = response?.status() ?? 400;
       if (response && !responseHeaders['content-type']?.includes('text/html')) {
         const buffer = await response.buffer() as Uint8Array;  // TODO(acorn1010): Why is this cast necessary?
-        return {type: 'buffer', buffer, statusCode, responseHeaders};
+        return {buffer, statusCode, responseHeaders};
       }
-      return {type: 'html', html, statusCode, responseHeaders};
+      return {buffer: Buffer.from(html), statusCode, responseHeaders};
+    } catch (e: any) {
+      if (e.message.includes('net::ERR_NAME_NOT_RESOLVED')
+          || e.message.includes('(Page.navigate): Cannot navigate to invalid URL')) {
+        return {statusCode: 404, responseHeaders: {}, buffer: Buffer.from([])};
+      } else if (e.message.includes('net::ERR_ABORTED')) {
+        console.error(`Unable to render URL: "${url}". Using fallback.`);
+        // Failed to fetch. Maybe try without the browser this time?
+        return fetchPage(url, requestHeaders);
+      }
+      console.error('Page failed to render. Recreating browser!', e);
+      this.recreateBrowser().then(() => {});
+      throw e;
     } finally {
       // Swallow page close errors. The browser might have already closed by this point.
       page.close().catch(() => {}).then(() => {});
@@ -91,17 +106,20 @@ class ChromeBrowserRunnerSingleton {
   }
 }
 
-type RenderResponse = {
-  responseHeaders: Record<string, string>,
-  /** Response status code (e.g. 200 for success) */
-  statusCode: 200 | 404 | number,
-} & ({
-  type: 'html',
-  html: string,
-} | {
-  type: 'buffer',
-  buffer: Uint8Array,
-});
+/** Fetches a static page. Doesn't do any rendering. Used as a fallback in case the render fails. */
+async function fetchPage(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
+  try {
+    const response = await fetch(url/*, {headers: requestHeaders}*/);
+    return {
+      statusCode: response.status,
+      responseHeaders: Object.fromEntries(response.headers.entries()),
+      buffer: Buffer.from(await response.arrayBuffer()),
+    };
+  } catch (e) {
+    console.error(`render URL fetch failed: ${url}`, e);
+  }
+  return {statusCode: 500, responseHeaders: {}, buffer: Buffer.from([])};
+}
 
 const runner = new ChromeBrowserRunnerSingleton();
 export async function render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {

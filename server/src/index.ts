@@ -5,66 +5,81 @@
 import express from 'express';
 import cors from 'cors';
 import compression from "compression";
-import {render} from "./ChromeBrowser";
+import {doRequest} from "./api";
+import passport from 'passport';
+import session from 'express-session';
+import passportCustom from 'passport-custom';
+import {env} from "./Environment";
+import {flush} from "./api/flush";
 
 const app = express();
 app.use(cors());
 app.use(compression());
+app.use(passport.initialize());
+app.use(session({
+  secret: process.env.SESSION_PASSWORD!,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {secure: true},
+}));
+app.use(passport.session());
 
-// Don't include some problematic headers from the original third-party response. We're using our
-// own content-encoding, we don't support keep-alive connections, and we don't do chunked encoding.
-const HEADER_BLACK_LIST = new Set(['transfer-encoding', 'connection', 'content-encoding']);
-
-app.get('*', async (req, res) => {
-  let url = req.url.slice('/'.length);
-  if (!url) {
-    res.setHeader('Content-Type', 'application/json');
-    res.status(400).send(JSON.stringify({error: 'Invalid URL. Example request: https://render.acorn1010.com/https://foony.com'}));
-    return;
+// Define the User type
+declare global {
+  namespace Express {
+    interface User {
+      userId: string,
+      email: string,
+    }
+    interface Request {
+      user?: NonNullable<express.Request['user']> | undefined,
+    }
   }
-  // If this is not a full URL, then base the URL off of where it's requested from. This isn't
-  // really necessary and could be deleted without affecting the service. It's more for local
-  // development.
-  if (url.indexOf('://') < 0) {
-    const referer = req.header('referer') || '';
-    // From https://www.rfc-editor.org/rfc/rfc3986#page-51.
-    // Given a referer of e.g. http://localhost:3000/https://example.com/foo/bar,
-    // returns http://localhost:3000/https://example.com
-    const baseReferer = referer.match(/((?:([^:\/?#]+):)?\/\/([^\/?#]*)\/(?:([^:\/?#]+):)?\/\/([^\/?#]*)).*/)?.[1];
-    url = (baseReferer ?? referer) + '/' + url;
-  }
-  console.log('Navigating to URL', url);
-  const requestHeaders =
-      Object.fromEntries(
-          Object.entries(req.headers)
-              .filter(([key, value]) => {
-                if (typeof value !== 'string') {
-                  console.log('FILTERING', {key, value});
-                }
-                // TODO(acorn1010): Convert string[] to .join('\n')
-                return typeof value === 'string';
-              })) as Record<string, string>;
+}
 
-  try {
-    const response = await render(url, requestHeaders);
-    // console.log('response', response);
+passport.serializeUser((user, cb) => {
+  process.nextTick(() => {
+    return cb(null, {
+      id: user.userId,
+      email: 'test@example.com',
+    });
+  });
+});
 
-    // For each header in the actual response, set them
-    // FIXME(acorn1010): Replace with actual headers from browser.
-    for (const [key, value] of Object.entries(response.responseHeaders)) {
-      // this would have been easier to write in SQL @matty_twoshoes
-      if (!HEADER_BLACK_LIST.has(key.toLowerCase())) {
-        res.setHeader(key, value.indexOf('\n') >= 0 ? value.split('\n') : value);
+passport.deserializeUser((user, cb) => {
+  process.nextTick(() => {
+    return cb(null, user as Express.User);
+  });
+});
+
+const STRATEGIES = {
+  token: new passportCustom.Strategy(async (req, done) => {
+    const token = req.header('X-Prerender-Token') || req.query['token'];
+    if (typeof token === 'string') {
+      const userId = await env.redis.hget('tokens', token);
+      if (userId) {
+        done(undefined, {userId, email: 'acorn@acorn1010.com'} satisfies Express.User);
+        return;
       }
     }
-    res.send(response.type === 'html' ? response.html : response.buffer);
-  } catch (e: any) {
-    console.error('Unable to render URL.', e);
-    res.status(400).send(
-        JSON.stringify(
-            {error: `Invalid URL. Got: "${url}". Example request: "https://render.acorn1010.com/https://foony.com". Error: ${e.message}`}
-        ));
-  }
-});
+
+    console.log('authorizing token', token);
+    done(undefined, {userId: 'jellybean', email: 'jellybean@acorn1010.com'} satisfies Express.User);
+  }),
+  otherToken: new passportCustom.Strategy((req, done) => {
+    const token = req.header('X-Prerender-Token') || req.query['token'];
+    console.log('authorizing token2', token);
+    done(new Error("Code isn't cooked yet :("), false);
+  }),
+} as const satisfies {[strategyId: string]: passport.Strategy};
+
+// Add strategies here
+for (const [strategyId, strategy] of Object.entries(STRATEGIES)) {
+  passport.use(strategyId, strategy);
+}
+
+const auth = passport.authenticate(Object.keys(STRATEGIES));
+// TODO(acorn1010): When we get more API calls, load this dynamically from the folder
+app.get('*', auth, doRequest);
 
 app.listen(3000);

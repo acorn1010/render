@@ -1,0 +1,109 @@
+import express from "express";
+import {render} from "../browsers/ChromeBrowser";
+import {env} from "../Environment";
+import {RenderResponse} from "../db/Schema";
+import * as Url from "url";
+
+// Don't include some problematic headers from the original third-party response. We're using our
+// own content-encoding, we don't support keep-alive connections, and we don't do chunked encoding.
+const HEADER_BLACK_LIST = new Set(['transfer-encoding', 'connection', 'content-encoding']);
+
+const CACHE_TIME_MS = 24 * 60 * 60 * 1_000;
+
+export async function doRequest(req: express.Request, res: express.Response) {
+  const start = Date.now();
+  let url = req.url.slice('/'.length);
+  if (!url || !url.match(/^https?:\/\//)) {
+    res.setHeader('Content-Type', 'application/json');
+    res.status(400).send(JSON.stringify({error: 'Invalid URL. Example request: https://render.acorn1010.com/https://foony.com'}));
+    return;
+  }
+  // If this is not a full URL, then base the URL off of where it's requested from. This isn't
+  // really necessary and could be deleted without affecting the service. It's more for local
+  // development.
+  if (url.indexOf('://') < 0) {
+    const referer = req.header('referer') || '';
+    // From https://www.rfc-editor.org/rfc/rfc3986#page-51.
+    // Given a referer of e.g. http://localhost:3000/https://example.com/foo/bar,
+    // returns http://localhost:3000/https://example.com
+    const baseReferer = referer.match(/((?:([^:\/?#]+):)?\/\/([^\/?#]*)\/(?:([^:\/?#]+):)?\/\/([^\/?#]*)).*/)?.[1];
+    url = (baseReferer ?? referer) + '/' + url;
+  }
+  console.log('Navigating to URL', url);
+
+  const userId = req.user?.userId || '';
+  let response: RenderResponse | null = null;
+  const key = `{users:${userId}}:urls:${urlToKey(url)}`;
+  const [metadata, data] =
+      (await env.redis.multi()
+          .get(`${key}:m`)
+          .getBuffer(`${key}:d`)
+          .zincrby(`${key}:u`, 1, req.header('User-Agent') || '')
+          .exec()) as any as [[null, RenderResponse], [null, Buffer]];
+  if (metadata?.[1] && data?.[1]) {
+    response = {...JSON.parse(metadata[1] as any), buffer: data[1]};
+  }
+
+  if (!response) {
+    response = await renderUrl(req, url);
+    if (response) {
+      const {buffer, ...rest} = response;
+      env.redis.multi()
+          .set(`${key}:m`, JSON.stringify({...rest, renderTimeMs: Date.now() - start}), 'PX', CACHE_TIME_MS)
+          .setBuffer(`${key}:d`, Buffer.from(buffer), 'PX' as any, CACHE_TIME_MS as any)
+          .exec().then(() => {});
+    }
+  }
+
+  if (!response) {
+    res.status(400).send(
+        JSON.stringify(
+            {error: `Invalid URL. Got: "${url}". Example request: "https://render.acorn1010.com/https://foony.com".`}
+        ));
+    return;
+  }
+
+  // For each header in the actual response, set them
+  for (const [key, value] of Object.entries(response.responseHeaders)) {
+    // this would have been easier to write in SQL @matty_twoshoes
+    if (!HEADER_BLACK_LIST.has(key.toLowerCase())) {
+      res.setHeader(key, value.indexOf('\n') >= 0 ? value.split('\n') : value);
+    }
+  }
+  res.send(response.buffer);
+}
+
+/** Renders a `url` if it doesn't exist in the cache. */
+async function renderUrl(req: express.Request, url: string): Promise<RenderResponse | null> {
+  const requestHeaders =
+      Object.fromEntries(
+          Object.entries(req.headers)
+          .filter(([key, value]) => {
+            if (typeof value !== 'string') {
+              console.log('FILTERING', {key, value});
+            }
+            // TODO(acorn1010): Convert string[] to .join('\n')
+            return typeof value === 'string';
+          })) as Record<string, string>;
+
+  try {
+    return await render(url, requestHeaders);
+  } catch (e: any) {
+    console.error('Unable to render URL.', e);
+  }
+  return null;
+}
+
+/**
+ * Given a URL (e.g. "https://api.foony.com/foo/bar"), returns a nice key sorted by TLD, e.g.:
+ * "https://com:foony:api/foo/bar"
+ */
+function urlToKey(url: string): string {
+  const {protocol, host, path} = Url.parse(url);
+
+  // `host` will be the domain name + ':port' (if there's a port), so remove the port,
+  // reverse the order of the sections, then stick it back together
+  const [hostname, port] = (host || '').split(':');
+  const reverseHostname = hostname.split('.').reverse().join(':');
+  return `${protocol}${reverseHostname}${port ? `:${port}` : ''}${path}`;
+}
