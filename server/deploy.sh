@@ -6,8 +6,8 @@ set -e
 export HOST="render.acorn1010.com"
 export NAMESPACE="prerender"
 export REPLICAS=1  # Number of server instances to spin up
-export CPU="500m"  # Request 0.5 vCPUs
-export MEMORY="1Gi"  # Request 1 GiB of RAM
+export CPU="700m"  # Request 0.7 vCPUs
+export MEMORY="4Gi"  # Request 4 GiB of RAM
 
 # EVERYTHING BELOW THIS LINE SHOULD STAY THE SAME ACROSS ALL DEPLOYMENTS.
 echo "Deploying server."
@@ -35,4 +35,5 @@ docker push ${DOCKER_IMAGE}:latest
 export DOCKER_IMAGE="${DOCKER_IMAGE}:${VERSION}"
 export GCR_SECRET="${GCR_SECRET}"  # Needed so that K3s can pull the docker image
 
-envsubst < ../kubernetes/templates/deployment.yaml | kubectl apply -f -
+envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig=../kubernetes/kubeconfig apply -f -
+envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig="${HOME}/.kube/config.joes" apply -f -
