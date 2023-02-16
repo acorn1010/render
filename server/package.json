@@ -13,7 +13,7 @@
     "lint": "eslint 'src/**'",
     "prebuild": "del lib/",
     "build": "tsc",
-    "postbuild": "cpy '**/*' '!**/*.ts' ../lib/ --cwd=src/ --no-overwrite --parents",
+    "postbuild": "cpy 'src/**/*' '!**/*.ts' '!**/*.d.ts' '!**/*.d.ts.map' lib",
     "start": "node lib/index.js"
   },
   "engines": {
