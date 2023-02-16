@@ -80,6 +80,7 @@ for (const [strategyId, strategy] of Object.entries(STRATEGIES)) {
 
 const auth = passport.authenticate(Object.keys(STRATEGIES));
 // TODO(acorn1010): When we get more API calls, load this dynamically from the folder
+app.get('/flush', auth, flush);
 app.get('*', auth, doRequest);
 
 app.listen(3000);

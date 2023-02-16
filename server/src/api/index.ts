@@ -54,12 +54,18 @@ export async function doRequest(req: express.Request, res: express.Response) {
     if (response) {
       const {buffer, ...rest} = response;
       // Set the page cache and increment the number of pages this user has cached this month.
-      env.redis.multi()
+      const now = Date.now();
+      const commander = env.redis.multi()
           .incr(`{users:${userId}}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
           .pexpire(`{users:${userId}}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
-          .set(`${key}:m`, JSON.stringify({...rest, renderTimeMs: Date.now() - start}), 'PX', CACHE_TIME_MS)
-          .setBuffer(`${key}:d`, Buffer.from(buffer), 'PX' as any, CACHE_TIME_MS as any)
-          .exec().then(() => {});
+          .set(`${key}:m`, JSON.stringify({...rest, renderTimeMs: now - start}), 'PX', CACHE_TIME_MS)
+          .setBuffer(`${key}:d`, Buffer.from(buffer), 'PX' as any, CACHE_TIME_MS as any);
+      // If this request succeeded, then log when it expires so we can refresh it before cache
+      // expiration.
+      if (response.statusCode < 400) {
+        commander.zadd(`{users:${userId}}:expiresAt`, now + CACHE_TIME_MS, url)
+      }
+      commander.exec().then(() => {});
     }
   }
 
