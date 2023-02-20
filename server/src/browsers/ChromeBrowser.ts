@@ -13,7 +13,7 @@ class ChromeBrowserRunnerSingleton {
   private createdAt = 0;
 
   /** All outstanding requests. These need to be resolved before the browser can be closed. */
-  private outstandingRequests: Promise<unknown>[] = [];
+  private outstandingRequests = new Set<Promise<unknown>>();
 
   /** (Re)-initializes the browser. */
   private async init() {
@@ -48,7 +48,7 @@ class ChromeBrowserRunnerSingleton {
 
   public async render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
     console.log(`onRender: ${url}`);
-    while (this.outstandingRequests.length >= MAX_OUTSTANDING_REQUESTS) {
+    while (this.outstandingRequests.size >= MAX_OUTSTANDING_REQUESTS) {
       console.log('Max outstanding requests reached. Waiting...');
       await Promise.any(this.outstandingRequests);
     }
@@ -56,10 +56,10 @@ class ChromeBrowserRunnerSingleton {
     // TODO(acorn1010): Browser can crash if it fails to render here. Do we care? Can happen because
     //  of 20s timeout.
     const request = this.renderPage(url, requestHeaders);
-    this.outstandingRequests.push(request);
+    this.outstandingRequests.add(request);
     request.finally(() => {
       // Remove the outstanding request when it's completed
-      this.outstandingRequests = this.outstandingRequests.filter(other => request !== other);
+      this.outstandingRequests.delete(request);
     });
     return request;
   }
