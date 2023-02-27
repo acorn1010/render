@@ -14,7 +14,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -r pptruser && useradd -rm -g pptruser -G audio,video pptruser
 
-WORKDIR /usr/src/app/server
+WORKDIR /usr/src/app
 
 # Configure the base npm application
 # Instead of a simple command like COPY ./server ./server/, we split this into multiple commands in
@@ -23,10 +23,10 @@ COPY ./.env ./tsconfig.json ./package.json ./package-lock.json ./
 COPY ./lib ./lib
 
 # TODO(acorn1010): Figure out why COPY isn't copying as pptruser.
-RUN chown -R pptruser:pptruser /usr/src/app/server
+RUN chown -R pptruser:pptruser /usr/src/app
 USER pptruser
 
-RUN npm install
+RUN npm ci
 
 #CMD ["sleep", "6000000"]
 ENTRYPOINT ["npm", "start"]
