@@ -1,5 +1,6 @@
 import puppeteer, {Browser} from "puppeteer";
 import {RenderResponse} from "../db/Schema";
+import {fetchPage, logConsole, waitForDomToSettle} from "./BrowserUtils";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
@@ -8,6 +9,16 @@ const MAX_OUTSTANDING_REQUESTS = 10;
 
 class ChromeBrowserRunnerSingleton {
   private browser: Promise<Browser> | null = null;
+
+  /** Cache URLs for 60 seconds. TODO(acorn1010): Finish this. */
+  // private readonly cache = new LRUCache<string, ResponseForRequest>({
+  //   max: 1_000,
+  //   maxSize: 1_000_000_000,
+  //   sizeCalculation(value) {
+  //     return value.body.length || 1;
+  //   },
+  //   ttl: 60_000,
+  // });
 
   /** Timestamp when the browser was last created. Used to refresh the browser after a while. */
   private createdAt = 0;
@@ -40,16 +51,20 @@ class ChromeBrowserRunnerSingleton {
     }
     // Copy outstanding requests. New requests may come in while this is processing.
     const requests = [...this.outstandingRequests];
-    const browser = await this.browser;
+    const browserPromise = this.browser;
+    const browser = await  browserPromise;
     await Promise.all(requests);  // Wait for requests to complete
     // Close gracefully
     await browser.close();
+    // If this browser is still the same one as the promise, then it doesn't exist anymore, so set
+    // it to null.
+    if (this.browser === browserPromise) {
+      this.browser = null;
+    }
   }
 
   public async render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
-    console.log(`onRender: ${url}`);
     while (this.outstandingRequests.size >= MAX_OUTSTANDING_REQUESTS) {
-      console.log('Max outstanding requests reached. Waiting...');
       await Promise.any(this.outstandingRequests);
     }
 
@@ -70,16 +85,34 @@ class ChromeBrowserRunnerSingleton {
     const context = await browser.createIncognitoBrowserContext();
     const page = await context.newPage();
     try {
-      page.setDefaultTimeout(20_000);
+      // TODO(acorn1010): Include requestHeaders, but exclude User-Agent?
+      // await page.setExtraHTTPHeaders({
+      //   // ...requestHeaders,
+      //   "user-agent": `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/110.0.5478.${Math.floor(Math.random() * 100_000)} Safari/537.36`,
+      // });
+      page.setDefaultTimeout(30_000);  // TODO(acorn1010): Is this still necessary?
 
-      // TODO(acorn1010): Try to close JavaScript dialogs after 1 second
+      logConsole(page);
 
-      const response = await page.goto(url);
-      let html = await page.content();
-      try {
-        await page.waitForNetworkIdle({timeout: 3_000});
-        html = await page.content();
-      } catch (e: any) {}  // Ignore timeouts when the network isn't idle
+      const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
+
+      await waitForDomToSettle(page).catch(e => {
+        console.warn('Timed out while waiting for DOM', e);
+      });
+
+      const html = await page.content();
+
+      // Take a screenshot if not local
+      if (process.env.NODE_ENV !== 'production') {
+        await page.screenshot({
+          type: 'webp',
+          encoding: 'binary',
+          path: `/home/acorn/projects/js/render/scripts/${new URL(url).pathname}.webp`,
+          omitBackground: true,
+          quality: 85,
+        });
+      }
+
       const responseHeaders = response?.headers() ?? {};
       const statusCode = response?.status() ?? 400;
       if (response && !responseHeaders['content-type']?.includes('text/html')) {
@@ -104,21 +137,61 @@ class ChromeBrowserRunnerSingleton {
       page.close().catch(() => {}).then(() => {});
     }
   }
-}
 
-/** Fetches a static page. Doesn't do any rendering. Used as a fallback in case the render fails. */
-async function fetchPage(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
-  try {
-    const response = await fetch(url/*, {headers: requestHeaders}*/);
-    return {
-      statusCode: response.status,
-      responseHeaders: Object.fromEntries(response.headers.entries()),
-      buffer: Buffer.from(await response.arrayBuffer()),
-    };
-  } catch (e) {
-    console.error(`render URL fetch failed: ${url}`, e);
-  }
-  return {statusCode: 500, responseHeaders: {}, buffer: Buffer.from([])};
+  /**
+   * Briefly caches requests for a `page`. We do this so that we don't hammer other services
+   * (e.g. Cloudflare) to the point where we get temporarily blocked.
+   */
+  // private async cacheRequests(page: Page) {
+  //   await page.setRequestInterception(true);
+  //   page.on('request', async (request) => {
+  //     // TODO(acorn1010): Can allow aborting the load of images. Should be optional (default false).
+  //
+  //     const key = JSON.stringify({
+  //       url: request.url(),
+  //       method: request.method(),
+  //       headers: request.headers(),
+  //     });
+  //     const cachedValue = this.cache.get(key);
+  //     if (!cachedValue) {
+  //       request.continue().then(() => {});
+  //       return;
+  //     }
+  //
+  //     request.respond(cachedValue).then(() => {}).catch(e => {
+  //       request.continue().then(() => {});
+  //     });
+  //   });
+  //
+  //   page.on('response', async (response) => {
+  //     try {
+  //       const request = response.request();
+  //       const key = JSON.stringify({
+  //         url: request.url(),
+  //         method: request.method(),
+  //         headers: request.headers(),
+  //       });
+  //       if (!response.ok()) {
+  //         return;
+  //       }
+  //       const {
+  //         date,
+  //         ['content-length']: contentLength,
+  //         origin,
+  //         referer,
+  //         vary,
+  //         server,
+  //         ...headers
+  //       } = response.headers();
+  //       this.cache.set(key, {
+  //         headers,
+  //         body: await response.buffer(),
+  //         status: response.status(),
+  //         contentType: headers['content-type'] || 'text/html',
+  //       });
+  //     } catch (e) {}  // ignore errors
+  //   });
+  // }
 }
 
 const runner = new ChromeBrowserRunnerSingleton();
