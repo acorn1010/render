@@ -1,77 +1,83 @@
+# TODO(acorn1010): Switch with a nice clustered Redis with lots of persistence-y stuff.
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: redis
 ---
-apiVersion: databases.spotahome.com/v1
-kind: RedisFailover
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: redis
+  name: redis-configmap
   namespace: redis
-spec:
-  sentinel:
-    replicas: 3
-  redis:
-    replicas: 3
-    storage:
-      keepAfterDeletion: true
-      persistentVolumeClaim:
-        metadata:
-          name: redisfailover-persistent-data
-        spec:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 10Gi
-    # TODO(acorn1010): Move to Redis Enterprise when we have at least 3+ nodes and a NAS for persistence
-    # https://docs.redis.com/latest/kubernetes/deployment/quick-start/
-    # Example config: https://github.com/spotahome/redis-operator/blob/fe8090ac7291ee53ac30e534fa1cc03e5759fd10/example/redisfailover/custom-config.yaml
-    customConfig:
-      - "appendonly yes"
-  auth:
-    secretPath: redis-secret
+data:
+  redis-stack.conf: |
+    requirepass $REDIS_PASSWORD
+    dir /mnt/data
+    appendonly yes
+    daemonize yes
 ---
-# This Service and the redisinsight below are only needed if a "dashboard" is wanted for Redis.
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: redisinsight
+  name: pvc-redis
   namespace: redis
-  labels:
-    app: redisinsight
 spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 40Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-statefulset
+  namespace: redis
+spec:
+  serviceName: redis-service
   replicas: 1
   selector:
     matchLabels:
-      app: redisinsight
+      app: redis
   template:
     metadata:
       labels:
-        app: redisinsight
+        app: redis
     spec:
       containers:
-        - name:  redisinsight
-          image: redislabs/redisinsight:1.13.1
-          imagePullPolicy: IfNotPresent
-          volumeMounts:
-            - name: db
-              mountPath: /db
+        - name: redis-container
+          image: redis/redis-stack-server:latest
+          env:
+            - name: REDIS_DATA_DIR # Required. Seems to overwrite the ConfigMap
+              value: "/mnt/data"
           ports:
-            - containerPort: 8001
-              protocol: TCP
+            - containerPort: 6379
+          volumeMounts:
+            - name: mnt-data
+              mountPath: /mnt/data
+            - name: config
+              mountPath: /redis-stack.conf
+              subPath: ./redis-stack.conf
+              readOnly: true
       volumes:
-        - name: db
-          emptyDir: {}
+        - name: mnt-data
+          persistentVolumeClaim:
+            claimName: pvc-redis
+        - name: config
+          configMap:
+            name: redis-configmap
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: redisinsight-service
+  name: redis-service
+  namespace: redis
 spec:
-  ports:
-    - port: 80
-      targetPort: 8001
   selector:
-    app: redisinsight
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+# TODO(acorn1010): When we get 3+ nodes, switch to Redis Enterprise:
+# https://docs.redis.com/latest/kubernetes/deployment/quick-start/

@@ -63,6 +63,9 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --create-namespace
 kubectl apply -f ./ingress-nginx-configmap.yaml
 
+# Install metrics. Needed for HorizontalPodAutoscaler, etc.
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
 # Install LetsEncrypt certificate manager
 # kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.10.1/cert-manager.crds.yaml
 echo "Installing LetsEncrypt certificate manager..."
@@ -70,11 +73,13 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
   --version v1.10.1 \
-  --set installCRDs=true
+  --set installCRDs=true  # TODO(acorn1010): Seems to be failing around here the first time?
+echo "Done installing LetsEncrypt. Applying lets-encrypt yaml..."
 envsubst < ./lets-encrypt.yaml | kubectl apply -f -
 
 # Wait for the Ingress controller to start
 # TODO(acorn1010): Improve this. Is it possible to use `kubectl -n ingress-nginx rollout status` here?
+echo "Waiting for Ingress Controller..."
 INGRESS_NGINX_STATUS=$(kubectl get pods --namespace=ingress-nginx | grep "1/");
 while [ ! "${INGRESS_NGINX_STATUS}" ]; do
   echo "Waiting for Ingress Controller to finish starting up...";
@@ -98,6 +103,9 @@ helm upgrade --install rancher rancher-stable/rancher \
   --set ingress.tls.source=letsEncrypt \
   --set letsEncrypt.email="${LETSENCRYPT_EMAIL}" \
   --set letsEncrypt.ingress.class=nginx
+
+# Install services that we depend on
+./services/redis.sh
 
 COLOR_OFF='\033[0m'
 CYAN_UNDERLINE='\033[4;36m'
