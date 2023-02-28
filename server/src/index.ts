@@ -11,6 +11,7 @@ import session from 'express-session';
 import passportCustom from 'passport-custom';
 import {env} from "./Environment";
 import {flush} from "./api/flush";
+import {refetcher} from "./browsers/ChromeBrowser";
 
 const app = express();
 app.use(cors());
@@ -82,5 +83,7 @@ const auth = passport.authenticate(Object.keys(STRATEGIES));
 // TODO(acorn1010): When we get more API calls, load this dynamically from the folder
 app.get('/flush', auth, flush);
 app.get('*', auth, doRequest);
+
+refetcher.start();
 
 app.listen(3000);

@@ -10,13 +10,13 @@ import { promisify } from "util";
 // own content-encoding, we don't support keep-alive connections, and we don't do chunked encoding.
 const HEADER_BLACK_LIST = new Set(['transfer-encoding', 'connection', 'content-encoding']);
 
-const CACHE_TIME_MS = 24 * 60 * 60 * 1_000;
+// Cache every hour. Reduce to once per day later on
+const CACHE_TIME_MS = 60 * 60 * 1_000;
 
 const decompressBrotli = promisify(zlib.brotliDecompress);
 const compressBrotli = promisify(zlib.brotliCompress);
 
 export async function doRequest(req: express.Request, res: express.Response) {
-  const start = Date.now();
   let url = req.url.slice('/'.length);
   if (!url || !url.match(/^https?:\/\//)) {
     res.setHeader('Content-Type', 'application/json');
@@ -45,6 +45,7 @@ export async function doRequest(req: express.Request, res: express.Response) {
           .get(`${key}:m`)
           .getBuffer(`${key}:d`)
           .zincrby(`${key}:u`, 1, req.header('User-Agent') || '_')
+          .pexpire(`${key}:u`, 30 * 24 * 60 * 60 * 1_000)
           .zincrby(`{users:${userId}}:fetches:${yyyyMm}`, 1, url)
           .pexpire(`{users:${userId}}:fetches:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)  // NOTE: 'NX' is supported as of v7. Update as soon as it's stable
           .exec()) as any as [[null, RenderResponse], [null, Buffer]];
@@ -59,26 +60,7 @@ export async function doRequest(req: express.Request, res: express.Response) {
   // TODO(acorn1010): Instead of trying to render this directly, stick it in a worker queue
   //  and wait for it to be finished. This will reduce API flakiness.
   if (!response) {
-    response = await renderUrl(req, url);
-    if (response) {
-      const {buffer, ...rest} = response;
-      // Set the page cache and increment the number of pages this user has cached this month.
-      const now = Date.now();
-      const statusCode = response.statusCode;
-      compressBrotli(Buffer.from(buffer)).then(compressed => {
-        const commander = env.redis.multi()
-            .incr(`{users:${userId}}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
-            .pexpire(`{users:${userId}}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
-            .set(`${key}:m`, JSON.stringify({...rest, renderTimeMs: now - start}), 'PX', CACHE_TIME_MS)
-            .setBuffer(`${key}:d`, compressed, 'PX' as any, CACHE_TIME_MS as any);
-        // If this request succeeded, then log when it expires so we can refresh it before cache
-        // expiration.
-        if (statusCode < 400) {
-          commander.zadd(`{users:${userId}}:expiresAt`, now + CACHE_TIME_MS, url);
-        }
-        commander.exec();
-      });
-    }
+    response = await renderAndCache(userId, url, getRequestHeaders(req));
   }
 
   if (!response) {
@@ -99,29 +81,57 @@ export async function doRequest(req: express.Request, res: express.Response) {
   res.send(response.buffer);
 }
 
-/** Renders a `url` if it doesn't exist in the cache. */
-async function renderUrl(req: express.Request, url: string): Promise<RenderResponse | null> {
-  const requestHeaders =
-      Object.fromEntries(
-          Object.entries(req.headers)
-          .filter(([key, value]) => {
-            if (typeof value !== 'string') {
-              console.log('FILTERING', {key, value});
-            }
-            // TODO(acorn1010): Convert string[] to .join('\n')
-            return typeof value === 'string';
-          })) as Record<string, string>;
+function getRequestHeaders(req: express.Request): Record<string, string> {
+  return Object.fromEntries(
+      Object.entries(req.headers)
+      .filter(([key, value]) => {
+        if (typeof value !== 'string') {
+          console.log('FILTERING', {key, value});
+        }
+        // TODO(acorn1010): Convert string[] to .join('\n')
+        return typeof value === 'string';
+      })) as Record<string, string>;
+}
 
-  try {
-    return await render(url, requestHeaders);
-  } catch (e: any) {
+/** Renders a `URL` on behalf of `userId` and caches the result if successful. */
+export async function renderAndCache(
+    userId: string,
+    url: string,
+    headers: Record<string, string>): Promise<RenderResponse | null> {
+  const start = Date.now();
+  const result = await render(url, headers).catch(e => {
     console.error('Unable to render URL.', e);
+    return null;
+  });
+  if (!result) {
+    return null;
   }
-  return null;
+  // TODO(acorn1010): Should we return early instead of saving if it failed to render?
+  //  (e.g. 300+ error)
+  const {buffer, ...rest} = result;
+  // Set the page cache and increment the number of pages this user has cached this month.
+  const now = Date.now();
+  const statusCode = result.statusCode;
+  const key = `{users:${userId}}:urls:${urlToKey(url)}`;
+  const yyyyMm = getYyyyMm();
+  compressBrotli(Buffer.from(buffer)).then(compressed => {
+    const commander = env.redis.multi()
+        .incr(`{users:${userId}}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
+        .pexpire(`{users:${userId}}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
+        .set(`${key}:m`, JSON.stringify({...rest, renderTimeMs: now - start}), 'PX', CACHE_TIME_MS)
+        .setBuffer(`${key}:d`, compressed, 'PX' as any, CACHE_TIME_MS as any);
+    // If this request succeeded, then log when it expires so we can refresh it before cache
+    // expiration.
+    if (statusCode < 400) {
+      commander.zadd('urlExpiresAt', now + CACHE_TIME_MS, `${userId}|${url}`);
+    }
+    commander.exec();
+  });
+  return result;
 }
 
 /** Returns the current 'yyyy-mm'. Used in Redis for bucketing by month. */
-function getYyyyMm() {
+export function getYyyyMm() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
