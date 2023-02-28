@@ -5,7 +5,8 @@ import {RenderResponse} from "../db/Schema";
  * Waits for the DOM to finish rendering. If there are no DOM changes for `debounceMs`, then the
  * page is considered to be done rendering.
  */
-export async function waitForDomToSettle(page: Page, timeoutMs = 20_000, debounceMs = 1_000) {
+export async function waitForDomToSettle(page: Page, timeoutMs = 20_000, debounceMs = 750) {
+  const url = page.url();
   return page.evaluate(
       (timeoutMs, debounceMs) => {
         function debounce<T extends Function>(func: T, ms = 1_000): T {
@@ -29,7 +30,7 @@ export async function waitForDomToSettle(page: Page, timeoutMs = 20_000, debounc
         return new Promise<void>((resolve, reject) => {
           const mainTimeout = setTimeout(() => {
             observer.disconnect();
-            reject(new Error("Timed out while waiting for DOM to settle"));
+            reject(new Error("Timed out while waiting for DOM to settle: " + url));
           }, timeoutMs);
 
           const debouncedResolve = debounce(async () => {
@@ -55,7 +56,11 @@ export function logConsole(page: Page) {
   const describe = (jsHandle: JSHandle) => {
     return (jsHandle as any).executionContext().evaluate((obj: any) => {
       // serialize |obj| however you want
-      return `OBJ: ${typeof obj}, ${JSON.stringify(obj)}`;
+      try {
+        return `OBJ: ${typeof obj}, ${JSON.stringify(obj)}`;
+      } catch (e) {
+        return `OBJ: ${typeof obj} (circular)`;
+      }
     }, jsHandle);
   }
 

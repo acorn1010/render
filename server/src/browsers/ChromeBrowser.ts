@@ -1,4 +1,4 @@
-import puppeteer, {Browser} from "puppeteer";
+import puppeteer, {Browser, BrowserContext} from "puppeteer";
 import {RenderResponse} from "../db/Schema";
 import {fetchPage, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
@@ -15,6 +15,7 @@ const PAGE_EXPIRATION_MS = 30_000;
 
 class ChromeBrowserRunnerSingleton {
   private browser: Promise<Browser> | null = null;
+  private userContexts = new Map<string, BrowserContext>();
 
   /** Cache URLs for 60 seconds. TODO(acorn1010): Finish this. */
   // private readonly cache = new LRUCache<string, ResponseForRequest>({
@@ -63,7 +64,8 @@ class ChromeBrowserRunnerSingleton {
     // Copy outstanding requests. New requests may come in while this is processing.
     const requests = [...this.outstandingRequests];
     const browserPromise = this.browser;
-    const browser = await  browserPromise;
+    this.userContexts.clear();
+    const browser = await browserPromise;
     await Promise.all(requests);  // Wait for requests to complete
     // Close gracefully
     await browser.close();
@@ -71,6 +73,7 @@ class ChromeBrowserRunnerSingleton {
     // it to null.
     if (this.browser === browserPromise) {
       this.browser = null;
+      this.userContexts.clear();
     }
   }
 
@@ -93,7 +96,12 @@ class ChromeBrowserRunnerSingleton {
   private async renderPage(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
     console.log(`Rendering page: ${url}`);
     const browser = await this.init();
-    const context = await browser.createIncognitoBrowserContext();
+    // Reuse contexts by the same user / group of users
+    const contextKey = getContextKey(requestHeaders);
+    const context = this.userContexts.get(contextKey) || await browser.createIncognitoBrowserContext();
+    if (context) {
+      this.userContexts.set(contextKey, context);
+    }
     const page = await context.newPage();
     try {
       // TODO(acorn1010): Include requestHeaders, but exclude User-Agent?
@@ -105,9 +113,11 @@ class ChromeBrowserRunnerSingleton {
 
       const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
 
+      const start = Date.now();
       await waitForDomToSettle(page).catch(e => {
         console.warn('Timed out while waiting for DOM', e);
       });
+      console.log(`Waited ${((Date.now() - start) / 1_000).toFixed(1) }s for ${url} to render.`);
 
       const html = await page.content();
 
@@ -192,6 +202,23 @@ class ChromeBrowserRunnerSingleton {
   // }
 }
 
+function getContextKey(requestHeaders: Record<string, string>) {
+  const {
+      ['x-request-id']: xRequestId,  // Changes every time
+
+      // These change when a user's IP / that user changes. Because bots are distributed, this
+      // could cause a new context to be made.
+      ['x-real-ip']: xRealIp,
+      ['x-forwarded-for']: xForwardedFor,
+      ['x-original-forwarded-for']: xOriginalForwardedFor,
+      ['cf-ray']: cfRay,
+      ['cf-connecting-ip']: cfConnectingIp,
+
+      ...rest
+  } = requestHeaders;
+  return JSON.stringify(rest);
+}
+
 const runner = new ChromeBrowserRunnerSingleton();
 export async function render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
   return runner.render(url, requestHeaders);
@@ -233,16 +260,17 @@ class Refetcher {
   }
 
   private async render() {
-    if (!this.timeout) {
-      return;  // Timeout was canceled.
-    }
-    if (this.runner.getOutstandingRequestsCount() > 0) {
-      return;  // Browser is busy. Wait.
-    }
     // Browser is free to do work! Refresh cache that's about to expire.
     const userIdUrls = shuffle(await env.redis.zrangebyscore('urlExpiresAt', 0, Date.now() + REFETCH_BUFFER_MS, 'LIMIT', 0, 1_000));
     const userIdToRefresh = new Map<string, boolean>();  // Maps userId to whether we should refresh for them
     for (const userIdUrl of userIdUrls) {
+      if (!this.timeout) {
+        return;  // Timeout was canceled.
+      }
+      if (this.runner.getOutstandingRequestsCount() > 0) {
+        return;  // Browser is busy. Wait.
+      }
+
       const index = userIdUrl.indexOf('|');
       const userId = index >= 0 ? userIdUrl.slice(0, index) : 'jellybean';  // FIXME(acorn1010): Delete this fake username once we have auth.
       if (!userIdToRefresh.has(userId)) {
