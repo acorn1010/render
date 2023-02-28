@@ -1,5 +1,8 @@
 Prerender service based on https://prerender.io
 
+**NOTE:** All commits should use https://www.conventionalcommits.org/en/v1.0.0/.
+**TODO(acorn1010):** Use https://github.com/semantic-release/semantic-release
+
 # Tech Stack
  * Hetzner for K8 cluster (CPX21)
   * https://github.com/vitobotta/hetzner-k3s for quick provisioning / deployment?
