@@ -1,8 +1,6 @@
-import {PushId} from "./DbUtils";
-
 /** API token used for authorizing with the backend */
 type ApiToken = string;
-type UserId = PushId;
+type UserId = string;
 
 type User = {};
 
