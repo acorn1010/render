@@ -113,6 +113,7 @@ class ChromeBrowserRunnerSingleton {
 
       const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
 
+      console.log(`Waiting for DOM to settle: ${url}`);
       const start = Date.now();
       await waitForDomToSettle(page).catch(e => {
         console.warn('Timed out while waiting for DOM', e);

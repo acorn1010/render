@@ -5,18 +5,16 @@ import {RenderResponse} from "../db/Schema";
  * Waits for the DOM to finish rendering. If there are no DOM changes for `debounceMs`, then the
  * page is considered to be done rendering.
  */
-export async function waitForDomToSettle(page: Page, timeoutMs = 20_000, debounceMs = 750) {
+export async function waitForDomToSettle(page: Page, timeoutMs = 5_000, debounceMs = 750): Promise<void> {
   const url = page.url();
   return page.evaluate(
-      (timeoutMs, debounceMs) => {
+      (timeoutMs, debounceMs, url) => {
         function debounce<T extends Function>(func: T, ms = 1_000): T {
           let timeout: ReturnType<typeof setTimeout>;
           return ((...args: unknown[]) => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => {
-              // @ts-ignore
-              func.apply(this, args);
-            }, ms);
+            // @ts-ignore
+            timeout = setTimeout(() => func.apply(this, args), ms);
           }) as any;
         }
 
@@ -33,21 +31,23 @@ export async function waitForDomToSettle(page: Page, timeoutMs = 20_000, debounc
             reject(new Error("Timed out while waiting for DOM to settle: " + url));
           }, timeoutMs);
 
-          const debouncedResolve = debounce(async () => {
+          const debouncedResolve = debounce(() => {
             observer.disconnect();
             clearTimeout(mainTimeout);
             resolve();
           }, debounceMs);
 
-          const observer = new MutationObserver(() => {
-            debouncedResolve().then(() => {});
-          });
+          const observer = new MutationObserver(() => debouncedResolve());
           const config = {attributes: true, childList: true, subtree: true};
           observer.observe(document.body, config);
+          // It's possible this was a static page, which won't change the DOM, so fire off an
+          // initial debounce.
+          debouncedResolve();
         });
       },
       timeoutMs,
-      debounceMs
+      debounceMs,
+      url,
   );
 }
 
@@ -71,7 +71,7 @@ export function logConsole(page: Page) {
     const type = message.type().substr(0, 3).toUpperCase();
     let text = '';
     for (let i = 0; i < args.length; ++i) {
-      text += `  [${i}] ${args[i]} \n`;
+      text += `  [${i}] ${args[i]}, `;
     }
     console.log(type, `${message.text()}\n${text}\n`);
   });
