@@ -288,8 +288,11 @@ class Refetcher {
       try {
         // Successfully acquired lock. We have ~35 seconds to render this page!
         // First, check to see if this page has enough usage. If not, delete it and let it expire.
-        const yyyyMm = getYyyyMm();
-        const renderCount = +(await env.redis.zscore(`{users:${userId}}:fetches:${yyyyMm}`, url) || 0);
+        const renderCount =
+            (await Promise.all([
+              env.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm(-1)}`, url),
+              env.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm()}`, url),
+            ])).map(value => +(value || 0)).reduce((a, b) => a + b, 0);
         if (renderCount < 2) {
           console.log(`Not rendering because too low renderCount`, url, renderCount);
           env.redis.zrem('urlExpiresAt', userIdUrl);
