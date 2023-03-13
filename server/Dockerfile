@@ -1,6 +1,7 @@
 # NOTE: It'd be nice to use Alpine, but Chrome is a chonky boi with lots of deps, so we're going with a chonky image
 FROM node:18
-# FROM node:18-alpine
+
+ENV PROD 1
 
 # Install prerequisites
 # From: https://github.com/puppeteer/puppeteer/blob/main/docker/Dockerfile

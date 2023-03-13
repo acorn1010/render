@@ -84,6 +84,10 @@ const auth = passport.authenticate(Object.keys(STRATEGIES));
 app.get('/flush', auth, flush);
 app.get('*', auth, doRequest);
 
-refetcher.start();
+// Only start the refetcher in prod
+if (process.env.PROD) {
+  console.log('Starting refetcher service!');
+  refetcher.start();
+}
 
 app.listen(3000);
