@@ -5,7 +5,7 @@ set -e
 # TODO(acorn1010): Move the rest of this script into the kubernetes/ folder
 export HOST="render.acorn1010.com"
 export NAMESPACE="prerender"
-export REPLICAS=1  # Number of server instances to spin up
+export REPLICAS=5  # Number of server instances to spin up
 export CPU="700m"  # Request 0.7 vCPUs
 export MEMORY="4Gi"  # Request 4 GiB of RAM
 
