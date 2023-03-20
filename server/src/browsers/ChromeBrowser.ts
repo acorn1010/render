@@ -1,9 +1,9 @@
 import puppeteer, {Browser, BrowserContext} from "puppeteer";
-import {RenderResponse} from "../db/Schema";
 import {fetchPage, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
 import {shuffle} from "lodash";
 import {renderAndCache} from "../api";
+import {RenderResponse} from "../db/models/UrlModel";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
