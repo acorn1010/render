@@ -3,8 +3,7 @@ import {RenderResponse} from "../db/Schema";
 import {fetchPage, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
 import {shuffle} from "lodash";
-import {nanoid} from "nanoid";
-import {getYyyyMm, renderAndCache} from "../api";
+import {renderAndCache} from "../api";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
@@ -78,22 +77,24 @@ class ChromeBrowserRunnerSingleton {
   }
 
   public async render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
+    const start = Date.now();
     while (this.outstandingRequests.size >= MAX_OUTSTANDING_REQUESTS) {
       await Promise.any(this.outstandingRequests);
     }
 
     // TODO(acorn1010): Browser can crash if it fails to render here. Do we care? Can happen because
     //  of 20s timeout.
-    const request = this.renderPage(url, requestHeaders);
-    this.outstandingRequests.add(request);
-    request.finally(() => {
-      // Remove the outstanding request when it's completed
-      this.outstandingRequests.delete(request);
+    const response = this.renderPage(url, requestHeaders);
+    this.outstandingRequests.add(response);
+    response.finally(() => {
+      // Remove the outstanding response when it's completed
+      this.outstandingRequests.delete(response);
     });
-    return request;
+    const result = await response;
+    return {...result, renderTimeMs: Date.now() - start};
   }
 
-  private async renderPage(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
+  private async renderPage(url: string, requestHeaders: Record<string, string>): Promise<Omit<RenderResponse, 'renderTimeMs'>> {
     console.log(`Rendering page: ${url}`);
     const browser = await this.init();
     // Reuse contexts by the same user / group of users
@@ -225,10 +226,6 @@ export async function render(url: string, requestHeaders: Record<string, string>
   return runner.render(url, requestHeaders);
 }
 
-/** Maximum amount of time in ms to fetch a URL before it expires. */
-const REFETCH_BUFFER_MS = 15 * 60_000;
-
-const uuid = nanoid();
 class Refetcher {
   private timeout: NodeJS.Timeout | null = null;
   constructor(private readonly runner: ChromeBrowserRunnerSingleton) {}
@@ -262,9 +259,9 @@ class Refetcher {
 
   private async render() {
     // Browser is free to do work! Refresh cache that's about to expire.
-    const userIdUrls = shuffle(await env.redis.zrangebyscore('urlExpiresAt', 0, Date.now() + REFETCH_BUFFER_MS, 'LIMIT', 0, 1_000));
+    const userIdUrls = shuffle(await env.redis.url.queryExpiringUrls());
     const userIdToRefresh = new Map<string, boolean>();  // Maps userId to whether we should refresh for them
-    for (const userIdUrl of userIdUrls) {
+    for (const {userId, url} of userIdUrls) {
       if (!this.timeout) {
         return;  // Timeout was canceled.
       }
@@ -272,31 +269,25 @@ class Refetcher {
         return;  // Browser is busy. Wait.
       }
 
-      const index = userIdUrl.indexOf('|');
-      const userId = index >= 0 ? userIdUrl.slice(0, index) : 'jellybean';  // FIXME(acorn1010): Delete this fake username once we have auth.
       if (!userIdToRefresh.has(userId)) {
         userIdToRefresh.set(
             userId,
-            (await env.redis.hget(`{users:${userId}}`, 'shouldRefreshCache') ?? 'true') === 'true');
+            (await env.redis.user.queryKey(userId, 'shouldRefreshCache')) ?? true);
       }
-      const url = userIdUrl.slice(index + 1);
       // Attempt to acquire a lock. If successful, render the page.
-      const key = `urlExpiresAt:workers:${userIdUrl}`;
       const start = Date.now();
-      if (!(await env.redis.set(key, uuid, 'NX' as any, 'PX' as any, PAGE_EXPIRATION_MS as any))) {
+      if (!await env.redis.url.acquireLock(userId, url, PAGE_EXPIRATION_MS)) {
         continue;  // Unable to establish lock. Someone else is rendering this page.
       }
       try {
         // Successfully acquired lock. We have ~35 seconds to render this page!
         // First, check to see if this page has enough usage. If not, delete it and let it expire.
-        const renderCount =
-            (await Promise.all([
-              env.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm(-1)}`, url),
-              env.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm()}`, url),
-            ])).map(value => +(value || 0)).reduce((a, b) => a + b, 0);
+        const renderCount = await env.redis.url.queryRenderCount(userId, url);
         if (renderCount < 2) {
           console.log(`Not rendering because too low renderCount`, url, renderCount);
-          env.redis.zrem('urlExpiresAt', userIdUrl);
+          env.redis.url.deleteExpiringUrl(userId, url).catch(e => {
+            console.error('Failed to delete expiring url', e);
+          });
           continue;
         }
 
@@ -306,7 +297,9 @@ class Refetcher {
         // If we still hold the lock, clean it up. Small race condition possible here, but I don't
         // want to make a Lua script just for this, so w/e.
         if (start + PAGE_EXPIRATION_MS > Date.now()) {
-          env.redis.del(key);
+          env.redis.url.removeLock(userId, url).catch((e) => {
+            console.error('Failed to remove lock', e);
+          });
         }
       }
     }

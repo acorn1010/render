@@ -57,7 +57,7 @@ const STRATEGIES = {
   token: new passportCustom.Strategy(async (req, done) => {
     const token = req.header('X-Prerender-Token') || req.query['token'];
     if (typeof token === 'string') {
-      const userId = await env.redis.hget('tokens', token);
+      const userId = await env.redis.user.getUserIdByToken(token);
       if (userId) {
         done(undefined, {userId, email: 'acorn@acorn1010.com'} satisfies Express.User);
         return;

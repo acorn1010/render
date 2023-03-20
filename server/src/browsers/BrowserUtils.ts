@@ -78,7 +78,7 @@ export function logConsole(page: Page) {
 }
 
 /** Fetches a static page. Doesn't do any rendering. Used as a fallback in case the render fails. */
-export async function fetchPage(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
+export async function fetchPage(url: string, requestHeaders: Record<string, string>): Promise<Omit<RenderResponse, 'renderTimeMs'>> {
   try {
     const response = await fetch(url/*, {headers: requestHeaders}*/);
     // FIXME(acorn1010): Something in here is failing. What could it be?
