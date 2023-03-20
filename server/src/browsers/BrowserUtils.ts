@@ -1,5 +1,5 @@
 import {ConsoleMessage, JSHandle, Page} from "puppeteer";
-import {RenderResponse} from "../db/Schema";
+import {RenderResponse} from "../db/models/UrlModel";
 
 /**
  * Waits for the DOM to finish rendering. If there are no DOM changes for `debounceMs`, then the

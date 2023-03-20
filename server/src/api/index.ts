@@ -1,7 +1,7 @@
 import express from "express";
 import {render} from "../browsers/ChromeBrowser";
 import {env} from "../Environment";
-import {RenderResponse} from "../../lib/db/Schema";
+import {RenderResponse} from "../db/models/UrlModel";
 
 // Don't include some problematic headers from the original third-party response. We're using our
 // own content-encoding, we don't support keep-alive connections, and we don't do chunked encoding.
