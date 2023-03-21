@@ -1,7 +1,11 @@
 import {Button as MuiButton, ButtonProps as MuiButtonProps} from '@mui/material';
 
-type ButtonProps = Pick<MuiButtonProps, 'children' | 'onClick'>;
+type ButtonProps = Pick<MuiButtonProps, 'children' | 'className' | 'onClick'>;
 export function Button(props: ButtonProps) {
-  const {children, onClick} = props;
-  return <MuiButton onClick={onClick}>{children}</MuiButton>;
+  const {children, className, onClick} = props;
+  return (
+      <MuiButton className={className} onClick={onClick}>
+        {children}
+      </MuiButton>
+  );
 }

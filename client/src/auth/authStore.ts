@@ -28,9 +28,10 @@ const PROVIDERS = {
   google: () => new GoogleAuthProvider(),
   github: () => new GithubAuthProvider(),
 } as const satisfies {[provider: string]: () => AuthProvider};
+export type AuthProviderId = keyof typeof PROVIDERS;
 
 /** Opens a popup that allows the user to sign in with the given provider. */
-export async function signInWithProvider(providerKey: keyof typeof PROVIDERS): Promise<void> {
+export async function signInWithProvider(providerKey: AuthProviderId): Promise<void> {
   try {
     const result = await signInWithPopup(getAuth(), PROVIDERS[providerKey]());
     updateStore(result.user);
