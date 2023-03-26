@@ -1,5 +1,5 @@
-import {Button} from "../components/buttons/Button";
-import {AuthProviderId, signInWithProvider} from "../auth/authStore";
+import {Button} from "@/components/buttons/Button";
+import {AuthProviderId, signInWithProvider} from "@/auth/authStore";
 import {ReactElement} from "react";
 
 const PROVIDER_BUTTONS = {
@@ -9,8 +9,8 @@ const PROVIDER_BUTTONS = {
 
 export function LoginPage() {
   return (
-      <div className='flex-center flex-col gap-2'>
-        <h1 className='text-3xl font-semibold'>Log in</h1>
+      <div className='flex-center flex-col gap-2 m-auto'>
+        <h1 className='text-3xl font-semibold'>Log In</h1>
         <LoginButton provider='google' />
         <LoginButton provider='github' />
       </div>
@@ -20,8 +20,8 @@ export function LoginPage() {
 function LoginButton({provider}: {provider: keyof typeof PROVIDER_BUTTONS}) {
   const {name, logo: Logo} = PROVIDER_BUTTONS[provider];
   return (
-      <Button className='flex-center whitespace-nowrap rounded bg-slate-8700' onClick={() => signInWithProvider('github')}>
-        <Logo className='h-5 mx-2' /> {name} Login
+      <Button className='flex-center whitespace-nowrap rounded' onClick={() => signInWithProvider('github')}>
+        <Logo className='h-5 mx-2' /> {name}
       </Button>
   );
 }
