@@ -1,6 +1,7 @@
 import {Button} from "@/components/buttons/Button";
-import {AuthProviderId, signInWithProvider} from "@/auth/authStore";
+import {AuthProviderId, authStore, signInWithProvider} from "@/auth/authStore";
 import {ReactElement} from "react";
+import {Redirect} from "wouter";
 
 const PROVIDER_BUTTONS = {
   google: {name: 'Google', logo: GoogleLogo},
@@ -20,7 +21,7 @@ export default function LoginPage() {
 function LoginButton({provider}: {provider: keyof typeof PROVIDER_BUTTONS}) {
   const {name, logo: Logo} = PROVIDER_BUTTONS[provider];
   return (
-      <Button className='flex-center whitespace-nowrap rounded w-56' onClick={() => signInWithProvider('github')}>
+      <Button className='flex-center whitespace-nowrap rounded w-56' onClick={() => signInWithProvider(provider)}>
         <Logo className='h-5 mx-2' /> {name}
       </Button>
   );
