@@ -5,6 +5,7 @@ import {shuffle} from "lodash";
 import {renderAndCache} from "../api";
 import {RenderResponse} from "../db/models/UrlModel";
 import {User} from "../db/models/UserModel";
+import minimatch from "minimatch";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
@@ -16,16 +17,6 @@ const PAGE_EXPIRATION_MS = 30_000;
 class ChromeBrowserRunnerSingleton {
   private browser: Promise<Browser> | null = null;
   private userContexts = new Map<string, BrowserContext>();
-
-  /** Cache URLs for 60 seconds. TODO(acorn1010): Finish this. */
-  // private readonly cache = new LRUCache<string, ResponseForRequest>({
-  //   max: 1_000,
-  //   maxSize: 1_000_000_000,
-  //   sizeCalculation(value) {
-  //     return value.body.length || 1;
-  //   },
-  //   ttl: 60_000,
-  // });
 
   /** Timestamp when the browser was last created. Used to refresh the browser after a while. */
   private createdAt = 0;
@@ -148,61 +139,6 @@ class ChromeBrowserRunnerSingleton {
       page.close().catch(() => {}).then(() => {});
     }
   }
-
-  /**
-   * Briefly caches requests for a `page`. We do this so that we don't hammer other services
-   * (e.g. Cloudflare) to the point where we get temporarily blocked.
-   */
-  // private async cacheRequests(page: Page) {
-  //   await page.setRequestInterception(true);
-  //   page.on('request', async (request) => {
-  //     // TODO(acorn1010): Can allow aborting the load of images. Should be optional (default false).
-  //
-  //     const key = JSON.stringify({
-  //       url: request.url(),
-  //       method: request.method(),
-  //       headers: request.headers(),
-  //     });
-  //     const cachedValue = this.cache.get(key);
-  //     if (!cachedValue) {
-  //       request.continue().then(() => {});
-  //       return;
-  //     }
-  //
-  //     request.respond(cachedValue).then(() => {}).catch(e => {
-  //       request.continue().then(() => {});
-  //     });
-  //   });
-  //
-  //   page.on('response', async (response) => {
-  //     try {
-  //       const request = response.request();
-  //       const key = JSON.stringify({
-  //         url: request.url(),
-  //         method: request.method(),
-  //         headers: request.headers(),
-  //       });
-  //       if (!response.ok()) {
-  //         return;
-  //       }
-  //       const {
-  //         date,
-  //         ['content-length']: contentLength,
-  //         origin,
-  //         referer,
-  //         vary,
-  //         server,
-  //         ...headers
-  //       } = response.headers();
-  //       this.cache.set(key, {
-  //         headers,
-  //         body: await response.buffer(),
-  //         status: response.status(),
-  //         contentType: headers['content-type'] || 'text/html',
-  //       });
-  //     } catch (e) {}  // ignore errors
-  //   });
-  // }
 }
 
 function getContextKey(requestHeaders: Record<string, string>) {
@@ -283,16 +219,13 @@ class Refetcher {
       try {
         // Successfully acquired lock. We have ~35 seconds to render this page!
         // First, check to see if this page has enough usage. If not, delete it and let it expire.
-        const renderCount = await env.redis.url.queryRenderCount(userId, url);
-        if (renderCount < 2) {
-          console.log(`Not rendering because too low renderCount`, url, renderCount);
-          env.redis.url.deleteExpiringUrl(userId, url).catch(e => {
-            console.error('Failed to delete expiring url', e);
-          });
+        const reason = await maybeGetRenderSkipReason(url, userId, userIdToUser.get(userId)!);
+        if (reason) {
+          console.log(`Skipping render for user: ${userId}`, reason);
           continue;
         }
 
-        console.log('Re-rendering before cache expiration', userId, url, renderCount);
+        console.log('Re-rendering before cache expiration', userId, url);
         await renderAndCache(userId, url, {});
       } finally {
         // If we still hold the lock, clean it up. Small race condition possible here, but I don't
@@ -305,6 +238,25 @@ class Refetcher {
       }
     }
   }
+}
+
+/** Returns a non-empty string if `url` shouldn't be rendered. */
+async function maybeGetRenderSkipReason(url: string, userId: string, user: Pick<User, 'shouldRefreshCache' | 'ignoredPaths'>): Promise<string> {
+  if (!user.shouldRefreshCache) {
+    return `Not rendering because shouldNotRefreshCache: "${url}"`;
+  }
+  for (const ignoredPath of user.ignoredPaths) {
+    if (minimatch(url, ignoredPath)) {
+      return `Not rendering because matched ignorePath: "${url}", "${ignoredPath}"`;
+    }
+  }
+
+  const renderCount = await env.redis.url.queryRenderCount(userId, url);
+  if (renderCount < 2) {
+    return `Not rendering because too low renderCount: "${url}", ${renderCount}`;
+  }
+
+  return '';
 }
 
 export const refetcher = new Refetcher(runner);
