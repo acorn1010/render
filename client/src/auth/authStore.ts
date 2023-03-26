@@ -1,7 +1,7 @@
-import {createGlobalStore} from "../state/createGlobalStore";
-import {type Auth, type User, type AuthProvider, getAuth, GithubAuthProvider, GoogleAuthProvider, signInWithPopup} from "firebase/auth";
+import {createGlobalStore} from "@/state/createGlobalStore";
+import {type Auth, type User, type AuthProvider, signOut, getAuth, GithubAuthProvider, GoogleAuthProvider, signInWithPopup} from "firebase/auth";
 import {useEffect} from "react";
-import {app} from "../services/firebase";
+import {app} from "@/services/firebase";
 
 /** In order to use authStore, you must include #useAuth higher in the DOM. */
 export const authStore = createGlobalStore({
@@ -19,9 +19,17 @@ export function useAuth() {
   useEffect(() => {
     if (!auth) {
       auth = getAuth(app);
-      auth.onAuthStateChanged((user) => updateStore(user));
     }
+    auth.onAuthStateChanged((user) => updateStore(user));
   }, []);
+}
+
+/** Logs out the currently-logged-in user. */
+export function logout(): Promise<void> {
+  if (!auth) {
+    auth = getAuth(app);
+  }
+  return signOut(auth);
 }
 
 const PROVIDERS = {

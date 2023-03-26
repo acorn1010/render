@@ -7,7 +7,7 @@ const PROVIDER_BUTTONS = {
   github: {name: 'GitHub', logo: GithubLogo},
 } satisfies {[provider in AuthProviderId]: {name: string, logo: (props: {className?: string}) => ReactElement}};
 
-export function LoginPage() {
+export default function LoginPage() {
   return (
       <div className='flex-center flex-col gap-2 m-auto'>
         <h1 className='text-3xl font-semibold'>Log In</h1>
