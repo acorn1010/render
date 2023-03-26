@@ -20,7 +20,7 @@ export function LoginPage() {
 function LoginButton({provider}: {provider: keyof typeof PROVIDER_BUTTONS}) {
   const {name, logo: Logo} = PROVIDER_BUTTONS[provider];
   return (
-      <Button className='flex-center whitespace-nowrap rounded' onClick={() => signInWithProvider('github')}>
+      <Button className='flex-center whitespace-nowrap rounded w-56' onClick={() => signInWithProvider('github')}>
         <Logo className='h-5 mx-2' /> {name}
       </Button>
   );
