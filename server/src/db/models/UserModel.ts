@@ -1,17 +1,24 @@
 import Redis from "ioredis";
+import {Pretty} from "../../types/ExtraTypes";
+import {isNil} from "lodash";
 
-export type User = {
-  /**
-   * RegEx to match the page title for 404 pages. These pages will return a `404` status code.
-   */
-  regex404?: string,
+const DEFAULT_USER = {
+  /** Wildcard to match the page title for 404 pages. These pages will return a `404` status code. */
+  wildcard404: '' as string,
 
   /**
    * If `true`, the pages that were fetched in the last month will be refreshed right before they
    * expire from the cache.
    */
-  shouldRefreshCache?: boolean,
-};
+  shouldRefreshCache: false as boolean,
+
+  /**
+   * Wildcard patterns, such as "foo.com/games/*". You shouldn't specify the http:// prefix. If a
+   * pattern starts with "*" followed by "/", then it will apply to all domains.
+   */
+  ignoredPaths: [] as string[],
+} as const;
+export type User = typeof DEFAULT_USER;
 
 export class UserModel {
   constructor(private readonly redis: Redis) {}
@@ -21,8 +28,10 @@ export class UserModel {
     return this.redis.hget('tokens', token);
   }
 
-  async queryKey<K extends keyof User>(userId: string, key: K): Promise<User[K] | null> {
-    const result = await this.redis.hget(`{users:${userId}}`, key);
-    return result === null ? null : JSON.parse(result);
+  async queryKeys<K extends keyof User>(userId: string, ...keys: K[]): Promise<Pretty<Omit<User, Exclude<keyof User, K>>>> {
+    const result = await this.redis.hmget(`{users:${userId}}`, ...keys);
+    return Object.fromEntries(
+        result.map((value, idx) => [keys[idx], isNil(value) ? DEFAULT_USER[keys[idx]] : JSON.parse(value)])
+    ) as Pretty<Omit<User, Exclude<keyof User, K>>>;
   }
 }

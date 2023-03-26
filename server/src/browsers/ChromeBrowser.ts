@@ -4,6 +4,7 @@ import {env} from "../Environment";
 import {shuffle} from "lodash";
 import {renderAndCache} from "../api";
 import {RenderResponse} from "../db/models/UrlModel";
+import {User} from "../db/models/UserModel";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;
@@ -260,7 +261,7 @@ class Refetcher {
   private async render() {
     // Browser is free to do work! Refresh cache that's about to expire.
     const userIdUrls = shuffle(await env.redis.url.queryExpiringUrls());
-    const userIdToRefresh = new Map<string, boolean>();  // Maps userId to whether we should refresh for them
+    const userIdToUser = new Map<string, Pick<User, 'shouldRefreshCache' | 'ignoredPaths'>>();
     for (const {userId, url} of userIdUrls) {
       if (!this.timeout) {
         return;  // Timeout was canceled.
@@ -269,10 +270,10 @@ class Refetcher {
         return;  // Browser is busy. Wait.
       }
 
-      if (!userIdToRefresh.has(userId)) {
-        userIdToRefresh.set(
+      if (!userIdToUser.has(userId)) {
+        userIdToUser.set(
             userId,
-            (await env.redis.user.queryKey(userId, 'shouldRefreshCache')) ?? true);
+            await env.redis.user.queryKeys(userId, 'ignoredPaths', 'shouldRefreshCache'));
       }
       // Attempt to acquire a lock. If successful, render the page.
       const start = Date.now();
