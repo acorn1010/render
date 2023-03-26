@@ -9,6 +9,13 @@ const PROVIDER_BUTTONS = {
 } satisfies {[provider in AuthProviderId]: {name: string, logo: (props: {className?: string}) => ReactElement}};
 
 export default function LoginPage() {
+  // If user is already logged in, go to home page.
+  const userId = authStore.use('userId')[0];
+
+  if (userId) {
+    return <Redirect to='/' replace />;
+  }
+
   return (
       <div className='flex-center flex-col gap-2 m-auto'>
         <h1 className='text-3xl font-semibold'>Log In</h1>
