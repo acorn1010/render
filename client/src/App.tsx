@@ -7,12 +7,10 @@ export function App() {
   useAuth();
 
   return (
-      <div className='App'>
-        <TrpcProvider>
-          <SiteTheme>
-            <LoginPage />
-          </SiteTheme>
-        </TrpcProvider>
-      </div>
+      <TrpcProvider>
+        <SiteTheme>
+          <LoginPage />
+        </SiteTheme>
+      </TrpcProvider>
   );
 }
