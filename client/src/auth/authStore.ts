@@ -5,12 +5,16 @@ import {app} from "@/services/firebase";
 
 /** In order to use authStore, you must include #useAuth higher in the DOM. */
 export const authStore = createGlobalStore({
-  userId: undefined as string | undefined,
-  email: undefined as string | undefined,
-  displayName: undefined as string | undefined,
+  /**
+   * userId starts as undefined. If there's no logged-in user, this will be null. It's only
+   * undefined while loading.
+   */
+  userId: undefined as string | undefined | null,
+  email: undefined as string | undefined | null,
+  displayName: undefined as string | undefined | null,
 
   /** URL to this user's photo, if any (e.g. "https://foony.com/foony.png") */
-  photoUrl: undefined as string | undefined,
+  photoUrl: undefined as string | undefined | null,
 });
 
 let auth: Auth | null = null;
@@ -50,9 +54,9 @@ export async function signInWithProvider(providerKey: AuthProviderId): Promise<v
 
 function updateStore(user: User | null) {
   authStore.update({
-    userId: user?.uid,
-    email: user?.email ?? undefined,
-    displayName: user?.displayName ?? undefined,
-    photoUrl: user?.photoURL ?? undefined,
+    userId: user?.uid ?? null,
+    email: user?.email ?? null,
+    displayName: user?.displayName ?? null,
+    photoUrl: user?.photoURL ?? null,
   });
 }

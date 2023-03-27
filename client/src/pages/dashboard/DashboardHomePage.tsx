@@ -1,3 +1,3 @@
 export default function DashboardHomePage() {
-  return null;
+  return <p>Pretty dashboard. Make a token!</p>;
 }
