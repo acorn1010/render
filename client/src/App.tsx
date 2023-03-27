@@ -4,8 +4,8 @@ import {TrpcProvider} from "./TrpcProvider";
 import {Redirect, Route as Woute, Switch} from "wouter";
 import loadable from "@loadable/component";
 import {PropsWithChildren, useMemo} from "react";
-import HomePage from "@/pages/HomePage";
 import {isLoaded} from "@/state/isLoaded";
+import DashboardHomePage from "@/pages/dashboard/DashboardHomePage";
 
 export function App() {
   useAuth();
@@ -14,7 +14,7 @@ export function App() {
       <TrpcProvider>
         <SiteTheme>
           <Switch>
-            <AuthRoute type='auth' path='/'><HomePage /></AuthRoute>
+            <AuthRoute type='auth' path='/'><DashboardHomePage /></AuthRoute>
             <AuthRoute type='guest' path='/login' lazy='LoginPage' />
 
             <Route path='/logout' lazy='LogoutPage' />
@@ -28,7 +28,7 @@ function AuthRoute({type, ...rest}: RouteProps & {type: 'guest' | 'auth'}) {
   const userId = authStore.use('userId')[0];
 
   if (!isLoaded(userId)) {
-    return <p>Loading...</p>;
+    return <p className='flex-center m-auto'>Loading...</p>;
   } else if (type === 'guest' && !!userId) {
     // Authenticated. Show the homepage.
     return <Redirect to='/' replace />;
