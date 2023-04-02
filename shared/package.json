@@ -1,0 +1,27 @@
+{
+  "name": "render-shared-library",
+  "version": "1.0.0",
+  "license": "GPL-3.0-only",
+  "description": "Shared library between /server and /client.",
+  "author": "Acorn1010",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "lint": "tslint --project tsconfig.json",
+    "prebuild": "./node_modules/.bin/ts-json-schema-generator --tsconfig './tsconfig.json' --path 'src/Action.ts' > src/api_schema.json",
+    "build": "tsc && npm link && (cd ../server && npm i) && (cd ../client && npm i)",
+    "deploy": "npm i && npm run build && npm link",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "moderndash": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.10",
+    "ts-json-schema-generator": "^1.2.0",
+    "typescript": "^5.0.2"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "module": "CommonJS",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib",
+    "target": "ES2020",
+    "paths": {"@shared/*": ["src/*"]}
+  },
+  "compileOnSave": true,
+  "include": [
+    "src",
+    "src/api_schema.json"
+  ]
+}

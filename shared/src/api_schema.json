@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Action": {
+      "enum": [
+        "flush",
+        "getUsername"
+      ],
+      "type": "string"
+    },
+    "ActionInputs": {
+      "additionalProperties": false,
+      "description": "This type is required by ts-json-schema so we can generate proper",
+      "properties": {
+        "flush": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        },
+        "getUsername": {
+          "items": {
+            "title": "userId",
+            "type": "string"
+          },
+          "maxItems": 1,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "flush",
+        "getUsername"
+      ],
+      "type": "object"
+    },
+    "Actions": {
+      "additionalProperties": false,
+      "description": "Actions that can be sent to the server via the server API #call function. The value follows a special namespacing format. Before the first _ is the functions/src/actions/ filename that will have its #run method be executed. After that, the rest is action-specific. For example, game actions are of the form \"GameAction_{gameId}_{methodName}\".",
+      "properties": {
+        "flush": {
+          "additionalProperties": false,
+          "description": "Flushes the domains of the user.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "getUsername": {
+          "additionalProperties": false,
+          "properties": {
+            "input": {
+              "items": {
+                "title": "userId",
+                "type": "string"
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "flush",
+        "getUsername"
+      ],
+      "type": "object"
+    }
+  }
+}
