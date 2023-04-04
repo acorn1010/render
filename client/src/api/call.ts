@@ -1,5 +1,6 @@
 import {Actions} from 'render-shared-library/lib/Action';
 import {useEffect, useState} from "react";
+import {authStore} from "@/auth/authStore";
 
 type CallArgs<T extends keyof Actions> = Actions[T]['input'] extends any[]
     ? Actions[T]['input']
@@ -8,6 +9,9 @@ type CallArgs<T extends keyof Actions> = Actions[T]['input'] extends any[]
 /**
  * Periodically polls `action` with the given `args`. Returns `undefined` until the API has had a
  * chance to reply.
+ *
+ * TODO(acorn1010): Add Multiset so we can support batching in case multiple components need access
+ *  to the same endpoint.
  */
 export function useLongPoll<T extends keyof Actions>(action: T, ...args: CallArgs<T>):
     Actions[T]['output'] | undefined {
@@ -45,9 +49,14 @@ export const call: {[K in keyof Actions]: (...args: CallArgs<K>) => Promise<Acti
 async function _call<T extends keyof Actions>(
     action: T, ...args: CallArgs<T>): Promise<Actions[T]['output']> {
   const url = import.meta.env.DEV ? 'http://localhost:3000/api' : 'https://seorender.site/api';
+  authToken = await queryAuthToken();
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify({a: action, d: args ?? null}),
+    headers: authToken ? {
+      Authorization: `Bearer ${authToken}`,
+      'Content-Type': 'application/json',
+    } : {},
   });
   // API returns JSON with 'd' for data, and 'e' for error on success
   const result = await response.json() as {d: any, e: string};
@@ -55,4 +64,23 @@ async function _call<T extends keyof Actions>(
     throw new Error(result.e);
   }
   return result.d as Actions[T]['output'];
+}
+
+/** The last JWT auth bearer token that was found. Updated when calling room. */
+let authToken = '';
+
+/** Waits for an auth token to be available, then sets the authToken. */
+function queryAuthToken(): Promise<string> {
+  return new Promise<string>(async (resolve) => {
+    do {
+      const user = authStore.get('user');
+      // Always requery the authToken. This ensures our token doesn't go stale.
+      authToken = await user?.getIdToken() || authToken;
+      if (!authToken) {
+        // Wait a bit between requests.
+        await new Promise(resolve2 => setTimeout(resolve2, 50));
+      }
+    } while (!authToken);
+    resolve(authToken);
+  });
 }

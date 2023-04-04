@@ -11,7 +11,9 @@ import admin from "firebase-admin";
 import {makeWrappedRequest} from "./http/HttpsUtils";
 
 // Initialize Firebase
-admin.initializeApp();
+admin.initializeApp({
+  projectId: 'render-1010',
+});
 
 const server = Fastify();
 server.register(cors, {

@@ -34,13 +34,13 @@ export class UserModel {
     // We store renderCounts for the past 12 months, so go ahead and figure out all keys we need to
     // query.
     const months = range(-12, 1).map(monthOffset => getYyyyMm(monthOffset));
-    const result = await this.redis.mget(months.map(month => `{users:${userId}}:renderCounts:${month}`));
-    return result.map((count, i) => count === null ? null : {month: months[i], renderCount: count}).filter(value => value !== null) as any;
+    const result = await this.redis.mget(months.map(month => `users:${userId}:renderCounts:${month}`));
+    return result.map((count, i) => count === null ? null : {month: months[i], renderCount: parseInt(count)}).filter(value => value !== null) as any;
   }
 
   /** Returns the given properties of the user (e.g. 'ignoredPaths'). */
   async queryKeys<K extends keyof User>(userId: string, ...keys: K[]): Promise<Pretty<Omit<User, Exclude<keyof User, K>>>> {
-    const result = await this.redis.hmget(`{users:${userId}}`, ...keys);
+    const result = await this.redis.hmget(`users:${userId}`, ...keys);
     return Object.fromEntries(
         result.map((value, idx) => [keys[idx], isNil(value) ? DEFAULT_USER[keys[idx]] : JSON.parse(value)])
     ) as Pretty<Omit<User, Exclude<keyof User, K>>>;

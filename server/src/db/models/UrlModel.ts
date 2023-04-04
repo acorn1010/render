@@ -31,7 +31,7 @@ export class UrlModel {
 
   /** Flushes all the URLs for `userId`. Useful when redeploying a site. */
   async flush(userId: string): Promise<number> {
-    const result = this.redis.eval(DELETE_PATTERN, 1, `{users:${userId}}`, `{users:${userId}}:urls:*`);
+    const result = this.redis.eval(DELETE_PATTERN, 1, `users:${userId}`, `users:${userId}:urls:*`);
     return parseInt(result as any);
   }
 
@@ -74,8 +74,8 @@ export class UrlModel {
   /** Returns the number of times this page has been rendered in the past 2 months. */
   async queryRenderCount(userId: string, url: string): Promise<number> {
     return (await Promise.all([
-      this.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm(-1)}`, url),
-      this.redis.zscore(`{users:${userId}}:fetches:${getYyyyMm()}`, url),
+      this.redis.zscore(`users:${userId}:fetches:${getYyyyMm(-1)}`, url),
+      this.redis.zscore(`users:${userId}:fetches:${getYyyyMm()}`, url),
     ])).map(value => +(value || 0)).reduce((a, b) => a + b, 0);
   }
 
@@ -84,7 +84,7 @@ export class UrlModel {
    * that have requested this page.
    */
   async queryPage({userId, url, userAgent}: {userId: string, url: string, userAgent?: string}): Promise<RenderResponse | null> {
-    const key = `{users:${userId}}:urls:${urlToKey(url)}`;
+    const key = `users:${userId}:urls:${urlToKey(url)}`;
     const yyyyMm = getYyyyMm();
     const [metadata, data] =
         (await this.redis.multi()
@@ -92,8 +92,8 @@ export class UrlModel {
         .getBuffer(`${key}:d`)
         .zincrby(`${key}:u`, 1, userAgent || '_')
         .pexpire(`${key}:u`, 30 * 24 * 60 * 60 * 1_000)
-        .zincrby(`{users:${userId}}:fetches:${yyyyMm}`, 1, url)
-        .pexpire(`{users:${userId}}:fetches:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)  // NOTE: 'NX' is supported as of v7. Update as soon as it's stable
+        .zincrby(`users:${userId}:fetches:${yyyyMm}`, 1, url)
+        .pexpire(`users:${userId}:fetches:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)  // NOTE: 'NX' is supported as of v7. Update as soon as it's stable
         .exec()) as any as [[null, RenderResponse], [null, Buffer]];
     if (!metadata?.[1] || !data?.[1]) {
       return null;  // Missing either metadata or the page content itself
@@ -110,14 +110,14 @@ export class UrlModel {
     const now = Date.now();
     const {buffer, ...rest} = renderResponse;
     const statusCode = renderResponse.statusCode;
-    const key = `{users:${userId}}:urls:${urlToKey(url)}`;
+    const key = `users:${userId}:urls:${urlToKey(url)}`;
     const yyyyMm = getYyyyMm();
     const yyyyMmDd = getYyyyMmDd();
     compressBrotli(Buffer.from(buffer)).then(compressed => {
       const commander = this.redis.multi()
-          .incr(`{users:${userId}}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
-          .incr(`{users:${userId}}:renderCounts:${yyyyMmDd}`)  // Number of times user has rendered a page
-          .pexpire(`{users:${userId}}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
+          .incr(`users:${userId}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
+          .incr(`users:${userId}:renderCounts:${yyyyMmDd}`)  // Number of times user has rendered a page
+          .pexpire(`users:${userId}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
           .set(`${key}:m`, JSON.stringify(rest), 'PX', CACHE_TIME_MS)
           .setBuffer(`${key}:d`, compressed, 'PX' as any, CACHE_TIME_MS as any);
       // If this request succeeded, then log when it expires so we can refresh it before cache

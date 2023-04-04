@@ -9,7 +9,7 @@ function importFile(path: `./${string}.lua`): string {
  * Deletes cached URLs matching the pattern in ARGV[1]
  *
  * KEYS:
- *   hashtag - {users:$userId}
+ *   hashtag - users:$userId
  * ARGS:
  *   pattern - the URL pattern to delete
  */

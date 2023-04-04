@@ -5,6 +5,8 @@ import {app} from "@/services/firebase";
 
 /** In order to use authStore, you must include #useAuth higher in the DOM. */
 export const authStore = createGlobalStore({
+  user: undefined as Pick<User, 'getIdToken'> | null | undefined,
+
   /**
    * userId starts as undefined. If there's no logged-in user, this will be null. It's only
    * undefined while loading.
@@ -54,6 +56,7 @@ export async function signInWithProvider(providerKey: AuthProviderId): Promise<v
 
 function updateStore(user: User | null) {
   authStore.update({
+    user,
     userId: user?.uid ?? null,
     email: user?.email ?? null,
     displayName: user?.displayName ?? null,

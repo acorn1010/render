@@ -7,13 +7,12 @@ import {isArray, isBoolean, isObject, isString, map, mapValues} from "lodash";
 import {CallableContext} from "./http/CallableContext";
 
 type FastifyActionTypes =
-    {[K in keyof Actions]: {Body: string, Reply: Actions[K]['output']}};
+    {[K in keyof Actions]: {Body: {a: keyof Actions, d: Actions[keyof Actions]['input']}, Reply: Actions[K]['output']}};
 export async function doCall(
     req: FastifyRequest<FastifyActionTypes[keyof FastifyActionTypes]>,
     res: FastifyReply,
     context: CallableContext) {
-  const {a: action, d: data} =
-      JSON.parse(req.body) as {a: keyof Actions, d: Actions[keyof Actions]['input']};
+  const {a: action, d: data} = req.body;
   const validator = env.validators.get(action);
   if (!validator) {
     console.warn('Missing validator:', action);
