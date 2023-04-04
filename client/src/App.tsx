@@ -1,6 +1,5 @@
 import {authStore, useAuth} from "./auth/authStore";
 import {SiteTheme} from "./SiteTheme";
-import {TrpcProvider} from "./TrpcProvider";
 import {Redirect, Route as Woute, Switch} from "wouter";
 import loadable from "@loadable/component";
 import {PropsWithChildren, useMemo} from "react";
@@ -11,16 +10,14 @@ export function App() {
   useAuth();
 
   return (
-      <TrpcProvider>
-        <SiteTheme>
-          <Switch>
-            <AuthRoute type='auth' path='/'><DashboardHomePage /></AuthRoute>
-            <AuthRoute type='guest' path='/login' lazy='LoginPage' />
+      <SiteTheme>
+        <Switch>
+          <AuthRoute type='auth' path='/'><DashboardHomePage /></AuthRoute>
+          <AuthRoute type='guest' path='/login' lazy='LoginPage' />
 
-            <Route path='/logout' lazy='LogoutPage' />
-          </Switch>
-        </SiteTheme>
-      </TrpcProvider>
+          <Route path='/logout' lazy='LogoutPage' />
+        </Switch>
+      </SiteTheme>
   );
 }
 

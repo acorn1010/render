@@ -2,10 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Action": {
-      "enum": [
-        "flush",
-        "getUsername"
-      ],
+      "const": "flush",
       "type": "string"
     },
     "ActionInputs": {
@@ -16,20 +13,10 @@
           "maxItems": 0,
           "minItems": 0,
           "type": "array"
-        },
-        "getUsername": {
-          "items": {
-            "title": "userId",
-            "type": "string"
-          },
-          "maxItems": 1,
-          "minItems": 1,
-          "type": "array"
         }
       },
       "required": [
-        "flush",
-        "getUsername"
+        "flush"
       ],
       "type": "object"
     },
@@ -47,29 +34,7 @@
               "type": "array"
             },
             "output": {
-              "type": "null"
-            }
-          },
-          "required": [
-            "input",
-            "output"
-          ],
-          "type": "object"
-        },
-        "getUsername": {
-          "additionalProperties": false,
-          "properties": {
-            "input": {
-              "items": {
-                "title": "userId",
-                "type": "string"
-              },
-              "maxItems": 1,
-              "minItems": 1,
-              "type": "array"
-            },
-            "output": {
-              "type": "string"
+              "type": "boolean"
             }
           },
           "required": [
@@ -80,8 +45,7 @@
         }
       },
       "required": [
-        "flush",
-        "getUsername"
+        "flush"
       ],
       "type": "object"
     }

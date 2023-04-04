@@ -2,7 +2,7 @@ import puppeteer, {Browser, BrowserContext} from "puppeteer";
 import {fetchPage, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
 import {shuffle} from "lodash";
-import {renderAndCache} from "../api";
+import {renderAndCache} from "../api/render";
 import {RenderResponse} from "../db/models/UrlModel";
 import {User} from "../db/models/UserModel";
 import minimatch from "minimatch";

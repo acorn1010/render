@@ -4,16 +4,15 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "postinstall": "(cd ../server && npm link) && npm link \"prerender-server\"",
+    "postinstall": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
     "dev": "vite",
+    "prebuild": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/roboto": "^4.5.8",
     "@loadable/component": "^5.15.3",
-    "@trpc/client": "^10.18.0",
-    "@trpc/react-query": "^10.18.0",
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",
     "firebase": "^9.18.0",
@@ -35,7 +34,6 @@
     "@vitejs/plugin-react": "^3.1.0",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.21",
-    "prerender-server": "file:../server",
     "tailwindcss": "^3.2.7",
     "typescript": "^4.9.5",
     "vite": "^4.2.1"

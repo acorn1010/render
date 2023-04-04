@@ -30,3 +30,4 @@ server/.env
 *.sw?
 
 server/lib
+shared/lib

@@ -8,9 +8,6 @@ module.exports = {
   ],
   darkMode: ["class", '[data-theme="dark"]'],
 
-  /** Needed when used with MUI, unfortunately. */
-  important: true,
-
   theme: {
     extend: {
       fontFamily: {

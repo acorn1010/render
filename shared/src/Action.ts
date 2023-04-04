@@ -6,15 +6,11 @@
  */
 export type Actions = MakeActions<{
   /** Flushes the domains of the user. */
-  flush: {input: [], output: void},
-
-  getUsername: {input: [userId: string], output: string},
-
-  getRenderCount: {input: [page: string], output: number},
+  flush: {input: [], output: boolean},
 }>;
 export type Action = keyof Actions;
 /** This type is required by ts-json-schema so we can generate proper  */
 export type ActionInputs = {[K in keyof Actions]: Actions[K]['input']};
 
 /** Validates Action type and ensures everything follows the correct format. */
-type MakeActions<T extends {[key: string]: {input: any[], output: any}}> = T;
+type MakeActions<T extends {[key: string]: {input: {[key: string]: any}, output: any}}> = T;
