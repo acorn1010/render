@@ -17,7 +17,7 @@ export async function getAuthContext(authorization: string): Promise<CallableCon
   }
   try {
     const token = verifyIdTokenFromCache(idToken) || await verifyIdToken(idToken);
-    return {uid: token.uid};
+    return {uid: token.uid, authType: 'oauth'};
   } catch (err) {
     console.warn('Failed to authenticate request.');
     // noinspection ExceptionCaughtLocallyJS This is how Firebase does it.
@@ -33,32 +33,32 @@ type Request = FastifyRequest<{
 export const makeWrappedRequest = (callback: (req: FastifyRequest<any>, res: FastifyReply, context: CallableContext) => any) =>
     async (req: Request, res: FastifyReply) => {
       const token: string | any = req.headers['x-prerender-token'] || req.params.token;
-      let userId: string | undefined;
+      let context: CallableContext = {uid: undefined, authType: 'token'};
       if (typeof token === 'string') {
-        userId = (await env.redis.user.getUserIdByToken(token)) ?? undefined;
-        if (!userId) {
+        context.uid = (await env.redis.user.getUserIdByToken(token)) ?? undefined;
+        if (!context.uid) {
           throw new HttpsError('unauthenticated', 'Bad API token.');
         }
-        return;
       }
 
       const authorization = req.headers.authorization;
       if (authorization) {
-        const authContext = await getAuthContext(authorization);
-        userId = authContext.uid;
-        if (!userId) {
+        context = await getAuthContext(authorization);
+        if (!context.uid) {
+          console.log(`Bad bearer token: ${authorization}`);
           throw new HttpsError('unauthenticated', 'Bad Bearer token');
         }
       }
 
       try {
-        await callback(req, res, {uid: userId || undefined});
+        await callback(req, res, context);
       } catch (e: any) {
         let err = e;
         if (!(err instanceof HttpsError)) {
           console.error('Failed to run API call.', req.body, e);
           err = new HttpsError('internal', 'INTERNAL');
         }
+        console.error('Error during request.', err.toJson());
         res.status(err.getHttpErrorCode()).send(JSON.stringify({e: err.toJson()}));
       }
     };

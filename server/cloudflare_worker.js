@@ -116,6 +116,7 @@ addEventListener('fetch', event => {
         !xPrerender
         && BOT_AGENTS.some(e => requestUserAgent.includes(e))
         && !IGNORE_EXTENSIONS.some(e => e === ext)
+        && /^https?:\/\//.test(request.url)
     ) {
         event.respondWith(prerenderRequest(request));
     }
@@ -140,7 +141,7 @@ function prerenderRequest(request) {
         redirect: 'manual',
     });
 
-    // Cache for 7 days
+    // Cache for 1 day
     // See: https://developers.cloudflare.com/workers/runtime-apis/request/#requestinitcfproperties
-    return fetch(prerenderRequest, {cf: {cacheTtl: 7 * 24 * 60 * 60 }});
+    return fetch(prerenderRequest, {cf: {cacheTtl: 24 * 60 * 60 }});
 }

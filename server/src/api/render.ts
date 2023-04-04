@@ -13,7 +13,7 @@ const HEADER_BLACK_LIST = new Set(['transfer-encoding', 'connection', 'content-e
 export async function doRequest(req: FastifyRequest, res: FastifyReply, context: CallableContext) {
   let url = req.url.slice('/'.length);
   if (!url || !url.match(/^https?:\/\//)) {
-    throw new HttpsError('failed-precondition', 'Invalid URL. Example request: https://render.acorn1010.com/https://foony.com');
+    throw new HttpsError('failed-precondition', `Invalid URL "${req.url}". Example request: https://render.acorn1010.com/https://foony.com`);
   }
 
   // If this is not a full URL, then base the URL off of where it's requested from. This isn't

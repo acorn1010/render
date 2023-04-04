@@ -15,11 +15,14 @@ export async function doCall(
   const {a: action, d: data} = req.body;
   const validator = env.validators.get(action);
   if (!validator) {
-    console.warn('Missing validator:', action);
+    console.warn('Missing validator:', action, context);
     throw new HttpsError('failed-precondition', 'Bad request');
   } else if (!validator(data)) {
     console.dir('Bad client request', validator.errors);
     throw new HttpsError('failed-precondition', "Bad client request. Try refreshing your browser's cache.");
+  } else if (context.authType === 'token' && !['flush'].includes(action)) {
+    console.warn('Bad API request:', action, context);
+    throw new HttpsError('failed-precondition', "This type of request isn't allowed by API token.");
   }
 
   const result = await (ServerActions[action] as any)(context, data);
