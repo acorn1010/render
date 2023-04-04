@@ -1,3 +1,5 @@
+import {User} from "./models/User";
+
 /**
  * Actions that can be sent to the server via the server API #call function. The value follows a
  * special namespacing format. Before the first _ is the functions/src/actions/ filename that will
@@ -10,6 +12,12 @@ export type Actions = MakeActions<{
 
   /** Returns the page renders done by month for the user. */
   getMonthlyRenderCounts: {input: [], output: {month: string, renderCount: number}[]},
+
+  /** Retrieves information about a user's profile. */
+  getProfile: {input: [], output: User},
+
+  /** Refreshes a user's API key, returning their new API key. */
+  refreshToken: {input: [], output: string},
 }>;
 export type Action = keyof Actions;
 /** This type is required by ts-json-schema so we can generate proper  */

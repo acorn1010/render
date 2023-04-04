@@ -20,13 +20,16 @@ WORKDIR /usr/src/app
 # Configure the base npm application
 # Instead of a simple command like COPY ./server ./server/, we split this into multiple commands in
 # order to ignore the node_modules library (for some reason .dockerignore is being ignored).
-COPY ./.env ./tsconfig.json ./package.json ./package-lock.json ./
-COPY ./lib ./lib
+COPY ./server/.env ./server/tsconfig.json ./server/package.json ./server/package-lock.json ./server/
+COPY ./server/lib ./server/lib
+
+COPY ./shared ./shared/
 
 # TODO(acorn1010): Figure out why COPY isn't copying as pptruser.
 RUN chown -R pptruser:pptruser /usr/src/app
 USER pptruser
 
+WORKDIR /usr/src/app/server
 RUN npm ci
 
 #CMD ["sleep", "6000000"]

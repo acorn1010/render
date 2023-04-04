@@ -24,7 +24,7 @@ VERSION=$(date +"%Y.%m.%d_%H.%M.%S")
 (cd src; npm install && npm run build)
 
 # Build Docker image. We navigate up to our parent directory so that we can include the shared/ library.
-docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:"${VERSION}" --progress=plain -f ./Dockerfile .
+(cd ..; docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:"${VERSION}" --progress=plain -f server/Dockerfile .)
 
 # Deploy to container registry. If this fails, you may need to run the below command:
 #  gcloud auth configure-docker

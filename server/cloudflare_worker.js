@@ -1,9 +1,6 @@
 // API key for requests.
 const API_KEY = '';
 
-// The domains that you want to be prerendered.
-const PRERENDERED_DOMAINS = ['foony.com'];
-
 // That's it! You shouldn't need to change anything below here unless you really want to.
 
 // These are the user agents that the worker will look for to
@@ -48,6 +45,7 @@ const BOT_AGENTS = [
 
 // These are the extensions that the worker will skip prerendering
 // even if any other conditions pass.
+// NOTE: You may want to add .json here
 const IGNORE_EXTENSIONS = [
     '.ai',
     '.avi',
@@ -118,7 +116,6 @@ addEventListener('fetch', event => {
         !xPrerender
         && BOT_AGENTS.some(e => requestUserAgent.includes(e))
         && !IGNORE_EXTENSIONS.some(e => e === ext)
-        && PRERENDERED_DOMAINS.some(e => url.hostname === e)
     ) {
         event.respondWith(prerenderRequest(request));
     }

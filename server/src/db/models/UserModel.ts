@@ -2,24 +2,28 @@ import Redis from "ioredis";
 import {Pretty} from "../../types/ExtraTypes";
 import {isNil, range} from "lodash";
 import {getYyyyMm} from "../../TimeUtils";
+import { User } from "render-shared-library/lib/models/User";
+import {REFRESH_USER_TOKEN} from "../lua";
 
-const DEFAULT_USER = {
+export const DEFAULT_USER = {
   /** Wildcard to match the page title for 404 pages. These pages will return a `404` status code. */
-  wildcard404: '' as string,
+  wildcard404: '',
 
   /**
    * If `true`, the pages that were fetched in the last month will be refreshed right before they
    * expire from the cache.
    */
-  shouldRefreshCache: false as boolean,
+  shouldRefreshCache: false,
 
   /**
    * Wildcard patterns, such as "foo.com/games/*". You shouldn't specify the http:// prefix. If a
    * pattern starts with "*" followed by "/", then it will apply to all domains.
    */
-  ignoredPaths: [] as string[],
-} as const;
-export type User = typeof DEFAULT_USER;
+  ignoredPaths: [],
+
+  /** The user's private API key. Used to make requests via Cloudflare Workers / HTTPS. */
+  token: '',
+} satisfies User;
 
 export class UserModel {
   constructor(private readonly redis: Redis) {}
@@ -38,11 +42,26 @@ export class UserModel {
     return result.map((count, i) => count === null ? null : {month: months[i], renderCount: parseInt(count)}).filter(value => value !== null) as any;
   }
 
+  /**
+   * Returns all properties for a user. This is O(n) where `n` is the number of properties in the
+   * user.
+   */
+  async queryAllKeys(userId: string): Promise<User> {
+    const result = await this.redis.hgetall(`users:${userId}`);
+    return Object.fromEntries(
+        Object.entries(result).map(([key, value]) => [key, JSON.parse(value)])) as User;
+  }
+
   /** Returns the given properties of the user (e.g. 'ignoredPaths'). */
   async queryKeys<K extends keyof User>(userId: string, ...keys: K[]): Promise<Pretty<Omit<User, Exclude<keyof User, K>>>> {
     const result = await this.redis.hmget(`users:${userId}`, ...keys);
     return Object.fromEntries(
         result.map((value, idx) => [keys[idx], isNil(value) ? DEFAULT_USER[keys[idx]] : JSON.parse(value)])
     ) as Pretty<Omit<User, Exclude<keyof User, K>>>;
+  }
+
+  /** Expires the old user token and generates a new one to use. */
+  async refreshToken(userId: string): Promise<string> {
+    return this.redis.eval(REFRESH_USER_TOKEN, 0, userId) as Promise<string>;
   }
 }

@@ -4,7 +4,9 @@
     "Action": {
       "enum": [
         "flush",
-        "getMonthlyRenderCounts"
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
       ],
       "type": "string"
     },
@@ -21,11 +23,23 @@
           "maxItems": 0,
           "minItems": 0,
           "type": "array"
+        },
+        "getProfile": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        },
+        "refreshToken": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
         }
       },
       "required": [
         "flush",
-        "getMonthlyRenderCounts"
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
       ],
       "type": "object"
     },
@@ -86,11 +100,82 @@
             "output"
           ],
           "type": "object"
+        },
+        "getProfile": {
+          "additionalProperties": false,
+          "description": "Retrieves information about a user's profile.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "refreshToken": {
+          "additionalProperties": false,
+          "description": "Refreshes a user's API key, returning their new API key.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
         }
       },
       "required": [
         "flush",
-        "getMonthlyRenderCounts"
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
+      ],
+      "type": "object"
+    },
+    "User": {
+      "additionalProperties": false,
+      "properties": {
+        "ignoredPaths": {
+          "description": "Wildcard patterns, such as \"foo.com/games/*\". You shouldn't specify the http:// prefix. If a pattern starts with \"*\" followed by \"/\", then it will apply to all domains.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "shouldRefreshCache": {
+          "description": "If `true`, the pages that were fetched in the last month will be refreshed right before they expire from the cache.",
+          "type": "boolean"
+        },
+        "token": {
+          "description": "The user's private API key. Used to make requests via Cloudflare Workers / HTTPS.",
+          "type": "string"
+        },
+        "wildcard404": {
+          "description": "Wildcard to match the page title for 404 pages. These pages will return a `404` status code.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "wildcard404",
+        "shouldRefreshCache",
+        "ignoredPaths",
+        "token"
       ],
       "type": "object"
     }

@@ -30,7 +30,7 @@ export function useLongPoll<T extends keyof Actions>(action: T, ...args: CallArg
     return () => {
       clearInterval(timer);
     };
-  }, []);
+  }, [action, ...args]);
 
   return result;
 }

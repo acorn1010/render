@@ -56,6 +56,7 @@ export const makeWrappedRequest = (callback: (req: FastifyRequest<any>, res: Fas
       } catch (e: any) {
         let err = e;
         if (!(err instanceof HttpsError)) {
+          console.error('Failed to run API call.', req.body, e);
           err = new HttpsError('internal', 'INTERNAL');
         }
         res.status(err.getHttpErrorCode()).send(JSON.stringify({e: err.toJson()}));

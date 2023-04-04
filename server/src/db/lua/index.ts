@@ -14,3 +14,6 @@ function importFile(path: `./${string}.lua`): string {
  *   pattern - the URL pattern to delete
  */
 export const DELETE_PATTERN = importFile('./deletePattern.lua');
+
+/** Refreshes the user's API key. */
+export const REFRESH_USER_TOKEN = importFile('./refreshToken.lua');
