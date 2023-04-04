@@ -1,4 +1,4 @@
-import {ConsoleMessage, JSHandle, Page} from "puppeteer";
+import {ConsoleMessage, ConsoleMessageType, JSHandle, Page} from "puppeteer";
 import {RenderResponse} from "../db/models/UrlModel";
 
 /**
@@ -52,14 +52,27 @@ export async function waitForDomToSettle(page: Page, timeoutMs = 5_000, debounce
 }
 
 /** Prints the `page`'s console to stdout. Useful in debugging. */
-export function logConsole(page: Page) {
+export function logConsole(page: Page, consoleOutput: {type: ConsoleMessageType, args: string[]}[]) {
   const describe = (jsHandle: JSHandle) => {
-    return (jsHandle as any).executionContext().evaluate((obj: any) => {
-      // serialize |obj| however you want
+    return jsHandle.evaluate((obj: any) => {
+      function safeStringify(value: any) {
+        const seen = new WeakSet();
+        const replacer = (key: any, val: any) => {
+          if (typeof val === "object" && val !== null) {
+            if (seen.has(val)) {
+              return "(circular ref)";
+            }
+            seen.add(val);
+          }
+          return val;
+        };
+        return JSON.stringify(value, replacer);
+      }
+
       try {
-        return `OBJ: ${typeof obj}, ${JSON.stringify(obj)}`;
-      } catch (e) {
-        return `OBJ: ${typeof obj} (circular)`;
+        return safeStringify(obj);
+      } catch (e: any) {
+        return `Unable to safeStringify: ${typeof obj} (${e.message})`;
       }
     }, jsHandle);
   }
@@ -67,13 +80,7 @@ export function logConsole(page: Page) {
   // listen to browser console there
   page.on('console', async (message: ConsoleMessage) => {
     const args = await Promise.all(message.args().map(arg => describe(arg)));
-    // make ability to paint different console[types]
-    const type = message.type().substr(0, 3).toUpperCase();
-    let text = '';
-    for (let i = 0; i < args.length; ++i) {
-      text += `  [${i}] ${args[i]}, `;
-    }
-    console.log(type, `${message.text()}\n${text}\n`);
+    consoleOutput.push({type: message.type(), args});
   });
 }
 
@@ -96,11 +103,12 @@ export async function fetchPage(url: string, requestHeaders: Record<string, stri
     // });
     return {
       statusCode: response.status,
-      responseHeaders: Object.fromEntries(response.headers.entries()),
+      console: [],
+      headers: Object.fromEntries(response.headers.entries()),
       buffer: Buffer.from(await response.arrayBuffer()),
     };
   } catch (e) {
     console.error(`render URL fetch failed: ${url}`, e);
   }
-  return {statusCode: 500, responseHeaders: {}, buffer: Buffer.from([])};
+  return {statusCode: 500, console: [], headers: {}, buffer: Buffer.from([])};
 }

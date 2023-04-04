@@ -5,6 +5,7 @@ import {DELETE_PATTERN} from "../lua";
 import * as Url from "url";
 import {nanoid} from "nanoid";
 import {getYyyyMm, getYyyyMmDd} from "../../TimeUtils";
+import {ConsoleMessageType} from "puppeteer";
 
 const decompressBrotli = promisify(zlib.brotliDecompress);
 const compressBrotli = promisify(zlib.brotliCompress);
@@ -19,7 +20,9 @@ const uuid = nanoid();
 
 export type RenderResponse = {
   renderTimeMs: number,
-  responseHeaders: Record<string, string>,
+  headers: Record<string, string>,
+  /** Log of the console while rendering the request. */
+  console: {type: ConsoleMessageType, args: string[]}[],
   /** Response status code (e.g. 200 for success) */
   statusCode: 200 | 404 | number,
   /** The HTML / binary content of this page */

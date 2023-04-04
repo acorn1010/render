@@ -49,7 +49,7 @@ export async function doRequest(req: FastifyRequest, res: FastifyReply, context:
   }
 
   // For each header in the actual response, set them
-  for (const [key, value] of Object.entries(response.responseHeaders)) {
+  for (const [key, value] of Object.entries(response.headers)) {
     // this would have been easier to write in SQL @matty_twoshoes
     if (!HEADER_BLACK_LIST.has(key.toLowerCase())) {
       res.header(key, value.indexOf('\n') >= 0 ? value.split('\n') : value);

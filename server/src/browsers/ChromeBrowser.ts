@@ -1,5 +1,5 @@
 import puppeteer, {Browser, BrowserContext} from "puppeteer";
-import {fetchPage, waitForDomToSettle} from "./BrowserUtils";
+import {fetchPage, logConsole, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
 import {shuffle} from "lodash";
 import {renderAndCache} from "../api/render";
@@ -104,6 +104,8 @@ class ChromeBrowserRunnerSingleton {
       // });
       page.setDefaultTimeout(PAGE_EXPIRATION_MS);  // TODO(acorn1010): Is this still necessary?
 
+      const responseConsole: RenderResponse['console'] = [];
+      logConsole(page, responseConsole);
       const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
 
       console.log(`Waiting for DOM to settle: ${url}`);
@@ -119,13 +121,13 @@ class ChromeBrowserRunnerSingleton {
       const statusCode = response?.status() ?? 400;
       if (response && !responseHeaders['content-type']?.includes('text/html')) {
         const buffer = await response.buffer() as Uint8Array;  // TODO(acorn1010): Why is this cast necessary?
-        return {buffer, statusCode, responseHeaders};
+        return {buffer, statusCode, console: responseConsole, headers: responseHeaders};
       }
-      return {buffer: Buffer.from(html), statusCode, responseHeaders};
+      return {buffer: Buffer.from(html), statusCode, console: responseConsole, headers: responseHeaders};
     } catch (e: any) {
       if (e.message.includes('net::ERR_NAME_NOT_RESOLVED')
           || e.message.includes('(Page.navigate): Cannot navigate to invalid URL')) {
-        return {statusCode: 404, responseHeaders: {}, buffer: Buffer.from([])};
+        return {statusCode: 404, console: [], headers: {}, buffer: Buffer.from([])};
       } else if (e.message.includes('net::ERR_ABORTED')) {
         console.error(`Unable to render URL: "${url}". Using fallback.`);
         // Failed to fetch. Maybe try without the browser this time?
