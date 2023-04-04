@@ -4,7 +4,7 @@ import zlib from "zlib";
 import {DELETE_PATTERN} from "../lua";
 import * as Url from "url";
 import {nanoid} from "nanoid";
-import {getYyyyMm} from "../../TimeUtils";
+import {getYyyyMm, getYyyyMmDd} from "../../TimeUtils";
 
 const decompressBrotli = promisify(zlib.brotliDecompress);
 const compressBrotli = promisify(zlib.brotliCompress);
@@ -112,9 +112,11 @@ export class UrlModel {
     const statusCode = renderResponse.statusCode;
     const key = `{users:${userId}}:urls:${urlToKey(url)}`;
     const yyyyMm = getYyyyMm();
+    const yyyyMmDd = getYyyyMmDd();
     compressBrotli(Buffer.from(buffer)).then(compressed => {
       const commander = this.redis.multi()
           .incr(`{users:${userId}}:renderCounts:${yyyyMm}`)  // Number of times user has rendered a page
+          .incr(`{users:${userId}}:renderCounts:${yyyyMmDd}`)  // Number of times user has rendered a page
           .pexpire(`{users:${userId}}:renderCounts:${yyyyMm}`, 365 * 24 * 60 * 60 * 1_000/*, 'NX'*/)
           .set(`${key}:m`, JSON.stringify(rest), 'PX', CACHE_TIME_MS)
           .setBuffer(`${key}:d`, compressed, 'PX' as any, CACHE_TIME_MS as any);
