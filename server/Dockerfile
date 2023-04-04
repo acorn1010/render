@@ -25,12 +25,12 @@ COPY ./server/lib ./server/lib
 
 COPY ./shared ./shared/
 
+WORKDIR /usr/src/app/server
+RUN npm ci
+
 # TODO(acorn1010): Figure out why COPY isn't copying as pptruser.
 RUN chown -R pptruser:pptruser /usr/src/app
 USER pptruser
-
-WORKDIR /usr/src/app/server
-RUN npm ci
 
 #CMD ["sleep", "6000000"]
 ENTRYPOINT ["npm", "start"]
