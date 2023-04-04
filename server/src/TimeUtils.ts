@@ -1,6 +1,6 @@
 /**
  * Returns the current 'yyyy-mm'. Used in Redis for bucketing by month. If `monthOffset` is defined,
- * this will be the number of months in the past / future.
+ * this will be the number of months in the past / future (positive for future, negative for past).
  */
 export function getYyyyMm(monthOffset = 0) {
   const now = new Date();

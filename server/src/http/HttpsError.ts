@@ -24,4 +24,8 @@ export class HttpsError extends Error {
   getHttpErrorCode() {
     return TYPE_TO_STATUS_CODE[this.type];
   }
+
+  toJson() {
+    return `${this.type}: ${this.message}`;
+  }
 }

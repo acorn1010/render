@@ -7,6 +7,9 @@
 export type Actions = MakeActions<{
   /** Flushes the domains of the user. */
   flush: {input: [], output: boolean},
+
+  /** Returns the page renders done by month for the user. */
+  getMonthlyRenderCounts: {input: [], output: {month: string, renderCount: number}[]},
 }>;
 export type Action = keyof Actions;
 /** This type is required by ts-json-schema so we can generate proper  */

@@ -2,7 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Action": {
-      "const": "flush",
+      "enum": [
+        "flush",
+        "getMonthlyRenderCounts"
+      ],
       "type": "string"
     },
     "ActionInputs": {
@@ -13,10 +16,16 @@
           "maxItems": 0,
           "minItems": 0,
           "type": "array"
+        },
+        "getMonthlyRenderCounts": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
         }
       },
       "required": [
-        "flush"
+        "flush",
+        "getMonthlyRenderCounts"
       ],
       "type": "object"
     },
@@ -42,10 +51,46 @@
             "output"
           ],
           "type": "object"
+        },
+        "getMonthlyRenderCounts": {
+          "additionalProperties": false,
+          "description": "Returns the page renders done by month for the user.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "month": {
+                    "type": "string"
+                  },
+                  "renderCount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "month",
+                  "renderCount"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
         }
       },
       "required": [
-        "flush"
+        "flush",
+        "getMonthlyRenderCounts"
       ],
       "type": "object"
     }

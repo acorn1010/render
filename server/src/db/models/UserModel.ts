@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 import {Pretty} from "../../types/ExtraTypes";
-import {isNil} from "lodash";
+import {isNil, range} from "lodash";
+import {getYyyyMm} from "../../TimeUtils";
 
 const DEFAULT_USER = {
   /** Wildcard to match the page title for 404 pages. These pages will return a `404` status code. */
@@ -28,6 +29,16 @@ export class UserModel {
     return this.redis.hget('tokens', token);
   }
 
+  /** Returns the number of renders this user has done by month. */
+  async getMonthlyRenderCounts(userId: string): Promise<{month: string, renderCount: number}[]> {
+    // We store renderCounts for the past 12 months, so go ahead and figure out all keys we need to
+    // query.
+    const months = range(-12, 1).map(monthOffset => getYyyyMm(monthOffset));
+    const result = await this.redis.mget(months.map(month => `{users:${userId}}:renderCounts:${month}`));
+    return result.map((count, i) => count === null ? null : {month: months[i], renderCount: count}).filter(value => value !== null) as any;
+  }
+
+  /** Returns the given properties of the user (e.g. 'ignoredPaths'). */
   async queryKeys<K extends keyof User>(userId: string, ...keys: K[]): Promise<Pretty<Omit<User, Exclude<keyof User, K>>>> {
     const result = await this.redis.hmget(`{users:${userId}}`, ...keys);
     return Object.fromEntries(
