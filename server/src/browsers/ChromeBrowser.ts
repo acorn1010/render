@@ -222,6 +222,9 @@ class Refetcher {
         const reason = await maybeGetRenderSkipReason(url, userId, userIdToUser.get(userId)!);
         if (reason) {
           console.log(`Skipping render for user: ${userId}`, reason);
+          env.redis.url.deleteExpiringUrl(userId, url).catch((e) => {
+            console.error('Failed to delete expiring URL', userId, url, e);
+          });
           continue;
         }
 
