@@ -26,6 +26,7 @@ export function useLongPoll<T extends keyof Actions>(action: T, ...args: CallArg
       }
     };
     const timer = setInterval(refresh, 10_000);
+    refresh().then(() => {});
 
     return () => {
       clearInterval(timer);
