@@ -1,5 +1,5 @@
 import {Avatar} from "@/components/base/avatar/Avatar";
-import {authStore} from "@/auth/authStore";
+import {authStore, logout} from "@/auth/authStore";
 import {NavTitle} from "@/components/base/nav/NavTitle";
 import {
   DropdownMenu,
@@ -34,7 +34,7 @@ function ProfileAvatar() {
           <DropdownMenuItem>Profile</DropdownMenuItem>
           <DropdownMenuItem>Billing</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Sign Out</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>Sign Out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
   )
