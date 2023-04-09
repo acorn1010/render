@@ -11,6 +11,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        mono: ["var(--font-mono)", ...fontFamily.mono],
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       keyframes: {
