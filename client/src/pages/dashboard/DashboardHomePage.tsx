@@ -1,6 +1,5 @@
-import {Button} from "@/components/base/buttons/Button";
-import {authStore, logout} from "@/auth/authStore";
-import {PropsWithChildren, useState} from "react";
+import {authStore} from "@/auth/authStore";
+import {PropsWithChildren} from "react";
 import {ApiToken} from "@/components/inputs/ApiToken";
 import {SettingsPage} from "@/pages/dashboard/SettingsPage";
 import {Navbar} from "@/components/base/nav/Navbar";
@@ -18,7 +17,6 @@ export default function DashboardHomePage() {
           </p>
           <p>Welcome back, {displayName}</p>
           <SettingsPage />
-          <LogoutButton />
         </div>
       </DashboardContainer>
   );
@@ -32,19 +30,4 @@ function DashboardContainer({children}: PropsWithChildren<{}>) {
         {children}
       </>
   );
-}
-
-function LogoutButton() {
-  const [isSending, setIsSending] = useState(false);
-
-  const handleClick = async () => {
-    try {
-      setIsSending(true);
-      await logout();
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  return <Button disabled={isSending} onClick={handleClick}>Logout</Button>;
 }
