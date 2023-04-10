@@ -3,7 +3,7 @@ import {Button} from "@/components/base/buttons/Button";
 
 export function SettingsPage() {
   return (
-      <Button onClick={async () => {
+      <Button variant='destructive' onClick={async () => {
         const token = await call.refreshToken();
         if (token) {
           poll.update('getProfile')({token});
