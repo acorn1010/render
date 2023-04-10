@@ -78,7 +78,7 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
                 'group flex-center py-3 gap-x-4 text-base leading-6 font-semibold whitespace-nowrap'
             )}
         >
-          <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+          <Icon className={cn("h-6 w-6 shrink-0", !isCurrent && 'group-hover:animate-spin')} aria-hidden="true" />
           <span className='hidden lg:block'>{name}</span>
         </Link>
       </li>
