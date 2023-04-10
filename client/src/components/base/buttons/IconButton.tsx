@@ -22,4 +22,5 @@ const iconStyle = cn`
   cursor-pointer
   hover:bg-zinc-800
   hover:text-white
+  active:bg-zinc-900
 `;

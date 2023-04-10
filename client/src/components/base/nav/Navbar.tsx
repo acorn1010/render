@@ -8,10 +8,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuItem
 } from "@/components/base/menu/DropdownMenu";
+import {cn} from "@/lib/utils";
 
-export function Navbar() {
+export function Navbar({className}: {className?: string}) {
   return (
-      <nav className='flex mx-4 my-2'>
+      <nav className={cn('flex px-4 py-2 bg-zinc-900', className)}>
         <NavTitle />
         <ProfileAvatar />
       </nav>
@@ -31,7 +32,7 @@ function ProfileAvatar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent className='mx-2'>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Billing</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>Sign Out</DropdownMenuItem>
