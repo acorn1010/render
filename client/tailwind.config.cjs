@@ -10,6 +10,10 @@ module.exports = {
 
   theme: {
     extend: {
+      colors: {
+        lighten: 'rgba(255, 255, 255, .1)',
+        darken: 'rgba(0, 0, 0, .1)',
+      },
       fontFamily: {
         mono: ["var(--font-mono)", ...fontFamily.mono],
         sans: ["var(--font-sans)", ...fontFamily.sans],

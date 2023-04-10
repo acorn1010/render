@@ -12,10 +12,9 @@ const docs = [
   {name: 'Getting Started', to: '/worker', icon: FaPlayCircle},
 ] as const satisfies ReadonlyArray<NavLinkProps>;
 
-export function Sidebar({className}: {className?: string}) {
+export function Sidebar() {
   return (
-      <div className="flex grow overflow-hidden relative flex-col items-center gap-y-5 overflow-y-auto bg-blue-800 min-w-[64px] w-16 lg:w-56">
-        <Background />
+      <div className="flex grow flex-col items-center overflow-y-auto bg-blue-800 min-w-[64px] w-16 lg:w-56">
         <div className="flex-center h-14 shrink-0 bg-blue-950 w-full z-10">
           <img
               className="h-8 w-auto"
@@ -23,8 +22,9 @@ export function Sidebar({className}: {className?: string}) {
               alt="Created by Acorn1010"
           />
         </div>
-        <nav className="flex flex-1 flex-col w-full z-10">
-          <ul role="list" className="flex w-full flex-1 flex-col gap-y-7">
+        <nav className="flex flex-1 flex-col w-full z-10 relative overflow-hidden pt-5">
+          <Background />
+          <ul role="list" className="flex w-full flex-1 flex-col gap-y-7 z-10">
             <li>
               <ul role="list" className="mx-2 space-y-1">
                 {navigation.map((item, idx) => <NavLink key={idx} {...item} />)}
@@ -53,7 +53,7 @@ function NavLink({name, to, icon: Icon}: NavLinkProps) {
             className={cn(
                 isCurrent
                     ? 'bg-blue-600 text-white active:bg-blue-900'
-                    : 'text-blue-300 hover:text-white hover:bg-blue-700 active:bg-blue-900',
+                    : 'text-blue-300 hover:text-white hover:bg-lighten active:bg-darken',
                 'group flex justify-center lg:justify-start gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold whitespace-nowrap'
             )}
         >
@@ -88,7 +88,7 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
 function Background() {
   return (
       <>
-        <div className='bg-blue-700 absolute pointer-events-none rotate-45 inset-0 opacity-30' />
+        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-right left-full top-0 w-full h-full opacity-50 from-blue-700 bg-gradient-to-b' />
       </>
   );
 }
