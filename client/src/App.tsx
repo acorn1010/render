@@ -13,10 +13,11 @@ export function App() {
   return (
       <SiteTheme>
         <Switch>
-          <AuthRoute type='auth' path='/'><DashboardHomePage /></AuthRoute>
           <AuthRoute type='guest' path='/login' lazy={() => import('./pages/LoginPage')} />
 
           <Route path='/logout' lazy={() => import('./pages/LogoutPage')} />
+
+          <AuthRoute type='auth'><DashboardHomePage /></AuthRoute>
         </Switch>
       </SiteTheme>
   );
@@ -38,12 +39,12 @@ function AuthRoute({type, ...rest}: RouteProps & {type: 'guest' | 'auth'}) {
   return <Route {...rest} />;
 }
 
-type RouteProps = PropsWithChildren<{path: `/${string}`, lazy?: () => Promise<{default: () => JSX.Element}> /*lazy?: 'LoginPage' | 'LogoutPage'*/}>;
+type RouteProps = PropsWithChildren<{path?: `/${string}`, lazy?: () => Promise<{default: () => JSX.Element}> /*lazy?: 'LoginPage' | 'LogoutPage'*/}>;
 
 // TODO(acorn1010): Use Foony FileUtils to get all possible components.
 function Route(props: RouteProps) {
-  const {children, path, lazy} = props;
+  const {children, lazy, ...rest} = props;
   const LoadableComponent = useMemo(() => lazy ? loadable(lazy) : null, [lazy]);
 
-  return <Woute path={path}>{LoadableComponent ? <LoadableComponent /> : children}</Woute>;
+  return <Woute {...rest}>{LoadableComponent ? <LoadableComponent /> : children}</Woute>;
 }
