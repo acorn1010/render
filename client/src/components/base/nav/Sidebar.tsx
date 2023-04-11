@@ -14,8 +14,8 @@ const docs = [
 
 export function Sidebar() {
   return (
-      <div className="flex grow flex-col items-center overflow-y-auto bg-blue-800 min-w-[64px] w-16 lg:w-56">
-        <div className="flex-center h-14 shrink-0 bg-blue-950 w-full z-10">
+      <div className="flex grow flex-col items-center overflow-y-auto bg-gray-800 min-w-[64px] w-16 lg:w-56">
+        <div className="flex-center h-14 shrink-0 bg-gray-950 w-full z-10">
           <img
               className="h-8 w-auto"
               src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=500"
@@ -31,7 +31,7 @@ export function Sidebar() {
               </ul>
             </li>
             <li>
-              <div className="text-xs mx-4 font-semibold leading-6 text-blue-300">Docs</div>
+              <div className="text-xs mx-4 font-semibold leading-6 text-gray-300">Docs</div>
               <ul role="list" className="mx-2 space-y-1">
                 {docs.map((item, idx) => <NavLink key={idx} {...item} />)}
               </ul>
@@ -52,8 +52,8 @@ function NavLink({name, to, icon: Icon}: NavLinkProps) {
             to={to}
             className={cn(
                 isCurrent
-                    ? 'bg-blue-600 text-white active:bg-blue-900'
-                    : 'text-blue-300 hover:text-white hover:bg-lighten active:bg-darken',
+                    ? 'bg-gray-600 text-white active:bg-gray-900'
+                    : 'text-gray-300 hover:text-white hover:bg-lighten active:bg-darken',
                 'group flex justify-center lg:justify-start gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold whitespace-nowrap'
             )}
         >
@@ -73,8 +73,8 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
             to={to}
             className={cn(
                 isCurrent
-                    ? 'bg-blue-600 text-white active:bg-blue-900'
-                    : 'text-white hover:bg-blue-700 active:bg-blue-900',
+                    ? 'bg-gray-600 text-white active:bg-gray-900'
+                    : 'text-white hover:bg-gray-700 active:bg-gray-900',
                 'group flex-center py-3 gap-x-4 text-base leading-6 font-semibold whitespace-nowrap'
             )}
         >
@@ -88,7 +88,7 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
 function Background() {
   return (
       <>
-        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-left left-full top-0 w-[300%] h-[150%] opacity-50 from-blue-700 bg-gradient-to-b' />
+        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-left left-full top-0 w-[300%] h-[150%] opacity-50 from-gray-700 bg-gradient-to-b' />
       </>
   );
 }

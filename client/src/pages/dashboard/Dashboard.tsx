@@ -1,7 +1,5 @@
 import {authStore} from "@/auth/authStore";
 import {PropsWithChildren} from "react";
-import {ApiToken} from "@/components/inputs/ApiToken";
-import {SettingsPage} from "@/pages/dashboard/SettingsPage";
 import {Navbar} from "@/components/base/nav/Navbar";
 import {Sidebar} from "@/components/base/nav/Sidebar";
 import {Redirect, Switch} from "wouter";
@@ -12,27 +10,20 @@ export default function Dashboard() {
 
   return (
       <DashboardContainer>
-        <div className='flex-center flex-col m-auto gap-4'>
-          <Switch>
-            <Route path='/'>
-              <p>Welcome back, {displayName}</p>
-              <p>
-                More coming soon(TM). For now, you can refresh your API token and see the number of
-                monthly page renders you've had.
-              </p>
-            </Route>
-            <Route path='/worker'>
-              <p>To enable rendering on your Single Page App (SPA), </p>
-            </Route>
-            <Route path='/settings'>
-              <ApiToken />
-              <SettingsPage />
-            </Route>
-            <Route>
-              <Redirect to='/404' />
-            </Route>
-          </Switch>
-        </div>
+        <Switch>
+          <Route path='/'>
+            <p>Welcome back, {displayName}</p>
+            <p>
+              More coming soon(TM). For now, you can refresh your API token and see the number of
+              monthly page renders you've had.
+            </p>
+          </Route>
+          <Route path='/worker' lazy={() => import('./GettingStartedPage')} />
+          <Route path='/settings' lazy={() => import('./SettingsPage')} />
+          <Route>
+            <Redirect to='/404' />
+          </Route>
+        </Switch>
       </DashboardContainer>
   );
 }
@@ -42,9 +33,9 @@ function DashboardContainer({children}: PropsWithChildren<{}>) {
   return (
       <div className='flex h-full min-h-[100vh]'>
         <Sidebar />
-        <div className='flex flex-col w-full'>
+        <div className='flex flex-col w-full relative'>
           <Navbar />
-          <div className='flex flex-col m-4'>{children}</div>
+          <div className='flex flex-col m-4 z-10'>{children}</div>
         </div>
       </div>
   );
