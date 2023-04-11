@@ -1,11 +1,9 @@
-import {authStore, useAuth} from "./auth/authStore";
+import {useAuth} from "./auth/authStore";
 import {SiteTheme} from "./SiteTheme";
-import {Redirect, Route as Woute, Switch} from "wouter";
-import loadable from "@loadable/component";
-import {PropsWithChildren, useMemo} from "react";
-import {isLoaded} from "@/state/isLoaded";
-import DashboardHomePage from "@/pages/dashboard/DashboardHomePage";
+import {Switch} from "wouter";
+import Dashboard from "@/pages/dashboard/Dashboard";
 import * as React from "react";
+import {AuthRoute, Route} from "@/Route";
 
 export function App() {
   useAuth();
@@ -14,37 +12,12 @@ export function App() {
       <SiteTheme>
         <Switch>
           <AuthRoute type='guest' path='/login' lazy={() => import('./pages/LoginPage')} />
-
           <Route path='/logout' lazy={() => import('./pages/LogoutPage')} />
+          <Route path='/404' lazy={() => import('./pages/NotFoundPage')} />
 
-          <AuthRoute type='auth'><DashboardHomePage /></AuthRoute>
+          {/* Dashboard routes. Because dashboard is at the root, we need a catch-all */}
+          <AuthRoute type='auth'><Dashboard /></AuthRoute>
         </Switch>
       </SiteTheme>
   );
-}
-
-function AuthRoute({type, ...rest}: RouteProps & {type: 'guest' | 'auth'}) {
-  const userId = authStore.use('userId')[0];
-
-  if (!isLoaded(userId)) {
-    return <p className='flex-center m-auto'>Loading...</p>;
-  } else if (type === 'guest' && !!userId) {
-    // Authenticated. Show the homepage.
-    return <Redirect to='/' replace />;
-  } else if (type === 'auth' && !userId) {
-    // Unauthenticated.
-    return <Redirect to='/login' replace />;
-  }
-
-  return <Route {...rest} />;
-}
-
-type RouteProps = PropsWithChildren<{path?: `/${string}`, lazy?: () => Promise<{default: () => JSX.Element}> /*lazy?: 'LoginPage' | 'LogoutPage'*/}>;
-
-// TODO(acorn1010): Use Foony FileUtils to get all possible components.
-function Route(props: RouteProps) {
-  const {children, lazy, ...rest} = props;
-  const LoadableComponent = useMemo(() => lazy ? loadable(lazy) : null, [lazy]);
-
-  return <Woute {...rest}>{LoadableComponent ? <LoadableComponent /> : children}</Woute>;
 }

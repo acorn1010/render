@@ -88,7 +88,7 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
 function Background() {
   return (
       <>
-        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-right left-full top-0 w-full h-full opacity-50 from-blue-700 bg-gradient-to-b' />
+        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-left left-full top-0 w-[300%] h-[150%] opacity-50 from-blue-700 bg-gradient-to-b' />
       </>
   );
 }
