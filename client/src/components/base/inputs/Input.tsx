@@ -3,7 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 export type InputProps =
-    Pick<React.InputHTMLAttributes<HTMLInputElement>, 'className' | 'type' | 'value'>
+    Pick<React.InputHTMLAttributes<HTMLInputElement>, 'className' | 'type' | 'value' | 'readOnly'>
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, ...props }, ref) => {

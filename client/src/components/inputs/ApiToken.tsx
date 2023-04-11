@@ -14,7 +14,7 @@ export function ApiToken() {
       <div className='flex-center gap-2'>
         <p>API Token</p>
         <div className='flex relative w-72'>
-          <Input className='font-mono' type={isHidden ? 'password' : 'text'} value={token} />
+          <Input className='font-mono' type={isHidden ? 'password' : 'text'} value={token} readOnly />
           <IconButton
               icon={EyeIcon}
               className='absolute top-1/2 -translate-y-1/2 right-0 my-auto mr-1'
