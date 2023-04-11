@@ -9,7 +9,7 @@ const navigation = [
 ] as const satisfies ReadonlyArray<NavLinkProps>;
 
 const docs = [
-  {name: 'Getting Started', to: '/worker', icon: FaPlayCircle},
+  {name: 'Getting Started', to: '/getting-started', icon: FaPlayCircle},
 ] as const satisfies ReadonlyArray<NavLinkProps>;
 
 export function Sidebar() {

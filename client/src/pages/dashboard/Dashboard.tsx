@@ -4,6 +4,7 @@ import {Navbar} from "@/components/base/nav/Navbar";
 import {Sidebar} from "@/components/base/nav/Sidebar";
 import {Redirect, Switch} from "wouter";
 import {Route} from "@/Route";
+import DashboardHomePage from "@/pages/dashboard/DashboardHomePage";
 
 export default function Dashboard() {
   const displayName = authStore.use('displayName')[0];
@@ -12,13 +13,9 @@ export default function Dashboard() {
       <DashboardContainer>
         <Switch>
           <Route path='/'>
-            <p>Welcome back, {displayName}</p>
-            <p>
-              More coming soon(TM). For now, you can refresh your API token and see the number of
-              monthly page renders you've had.
-            </p>
+            <DashboardHomePage />
           </Route>
-          <Route path='/worker' lazy={() => import('./GettingStartedPage')} />
+          <Route path='/getting-started' lazy={() => import('./GettingStartedPage')} />
           <Route path='/settings' lazy={() => import('./SettingsPage')} />
           <Route>
             <Redirect to='/404' />
