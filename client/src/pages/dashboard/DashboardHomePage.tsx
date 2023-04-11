@@ -1,7 +1,16 @@
 import {FaPlus} from "react-icons/all";
 import {Link} from "wouter";
+import {poll} from "@/api/call";
+import {isLoaded} from "@/state/isLoaded";
+import {Skeleton} from "@/components/base/loading/Skeleton";
 
 export default function DashboardHomePage() {
+  const monthlyRenderCounts = poll.use('getMonthlyRenderCounts');
+
+  if (!isLoaded(monthlyRenderCounts)) {
+    return <Skeleton className='h-32' />
+  }
+
   return <EmptyDashboard />;
 }
 
