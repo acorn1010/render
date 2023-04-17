@@ -7,8 +7,6 @@ import {Route} from "@/Route";
 import DashboardHomePage from "@/pages/dashboard/DashboardHomePage";
 
 export default function Dashboard() {
-  const displayName = authStore.use('displayName')[0];
-
   return (
       <DashboardContainer>
         <Switch>
@@ -32,7 +30,7 @@ function DashboardContainer({children}: PropsWithChildren<{}>) {
         <Sidebar />
         <div className='flex flex-col w-full relative'>
           <Navbar />
-          <div className='flex flex-col m-4 z-10'>{children}</div>
+          <div className='flex flex-col m-4 z-10 h-[calc(100vh-88px)] scroll-auto'>{children}</div>
         </div>
       </div>
   );
