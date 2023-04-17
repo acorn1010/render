@@ -77,8 +77,6 @@ export const poll = {
   },
 };
 
-poll.update('getProfile');
-
 /**
  * Calls the server API. The call will be directed to the server for a room if the player is in a
  * room. Otherwise, the call will be load-balanced and will hit any server.
