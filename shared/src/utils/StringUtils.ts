@@ -1,8 +1,5 @@
-/** A weak hash that, given a `key` and `seed`, returns a 32-bit positive integer hash. */
-export const weakHash = murmurhash3_32_gc;
-
 /**
- * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
+ * A weak hash that, given a `key` and `seed`, returns a 32-bit positive integer hash.
  *
  * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
  * @see http://github.com/garycourt/murmurhash-js
@@ -13,7 +10,7 @@ export const weakHash = murmurhash3_32_gc;
  * @param {number} seed Positive integer only
  * @return {number} 32-bit positive integer hash
  */
-function murmurhash3_32_gc(key: string, seed: number) {
+export function weakHash(key: string, seed: number) {
   let remainder, bytes, h1, h1b, c1, c2, k1, i;
 
   remainder = key.length & 3; // key.length % 4
