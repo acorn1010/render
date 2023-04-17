@@ -8,6 +8,7 @@
     "dev": "vite",
     "prebuild": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
     "build": "tsc && vite build",
+    "deploy": "npm i && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
