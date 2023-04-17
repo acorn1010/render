@@ -1,12 +1,8 @@
 import {FaAngular, FaReact, FaVuejs} from "react-icons/all";
 import {poll} from "@/api/call";
 import {DashboardCard} from "@/components/cards/DashboardCard";
-import Prism from 'prismjs';
-import {PropsWithChildren, useEffect, useRef} from "react";
 import cloudflareWorker from './cloudflare_worker.js?raw';
-import './prism.css';
-import {cn} from "@/lib/utils";
-import {CopyButton} from "@/components/buttons/CopyButton";
+import {CodeBlock} from "@/components/base/blocks/CodeBlock";
 
 export default function GettingStartedPage() {
   const token = poll.use('getProfile')?.token ?? '';
@@ -51,30 +47,6 @@ export default function GettingStartedPage() {
           </li>
         </ol>
       </DashboardCard>
-  );
-}
-
-type CodeBlockProps = PropsWithChildren<{classes?: {root?: string, pre?: string, code?: string}, code: string, language: 'javascript'}>;
-function CodeBlock({classes, code, language}: CodeBlockProps) {
-  const codeRef = useRef<HTMLPreElement>(null);
-
-  const element = codeRef.current;
-  useEffect(() => {
-    if (element) {
-      Prism.highlightElement(element);
-    }
-  }, [code, element]);
-
-  return (
-      <div className={classes?.root}>
-        <div className='flex items-center justify-between bg-gray-700 py-2 px-4 rounded-t-md'>
-          <p>{language}</p>
-          <CopyButton className='text-gray-100 hover:bg-gray-600 active:bg-gray-800' value={code} />
-        </div>
-        <pre className={cn('!rounded-t-none !mt-0', classes?.pre)}>
-          <code className={cn(`language-${language}`, classes?.code)} ref={codeRef}>{code}</code>
-        </pre>
-      </div>
   );
 }
 
