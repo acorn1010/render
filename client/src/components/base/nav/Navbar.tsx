@@ -27,7 +27,7 @@ function ProfileAvatar() {
       <DropdownMenu>
         <DropdownMenuTrigger>
           <Avatar className='cursor-pointer hover:brightness-110 active:brightness-90' src={src}>
-            {displayName}
+            {displayName?.slice(0, 1) ?? '?'}
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent className='mx-2'>
