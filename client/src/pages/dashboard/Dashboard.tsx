@@ -30,7 +30,7 @@ function DashboardContainer({children}: PropsWithChildren<{}>) {
         <Sidebar />
         <div className='flex flex-col w-full relative'>
           <Navbar />
-          <div className='flex flex-col m-4 z-10 h-[calc(100vh-88px)] scroll-auto'>{children}</div>
+          <div className='flex flex-col m-4 z-10 h-[calc(100vh-88px)] overflow-scroll'>{children}</div>
         </div>
       </div>
   );

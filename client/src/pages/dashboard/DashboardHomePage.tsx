@@ -3,18 +3,35 @@ import {Link} from "wouter";
 import {poll} from "@/api/call";
 import {isLoaded} from "@/state/isLoaded";
 import {Skeleton} from "@/components/base/loading/Skeleton";
+import {SortableTable} from "@/components/tables/SortedTable";
 
 export default function DashboardHomePage() {
-  const monthlyRenderCounts = poll.use('getMonthlyRenderCounts');
+  const renderCounts = poll.use('getMonthlyRenderCounts');
 
-  if (!isLoaded(monthlyRenderCounts)) {
+  if (!isLoaded(renderCounts)) {
     return <Skeleton className='h-32' />
   }
 
-  return <EmptyDashboard />;
+  return renderCounts ? <MonthlyRenderTable renderCounts={renderCounts} /> : <EmptyDashboard />;
 }
 
-export function EmptyDashboard() {
+function MonthlyRenderTable({renderCounts}: {renderCounts: {month: string, renderCount: number}[]}) {
+  return (
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="sm:flex sm:items-center">
+          <div className="sm:flex-auto">
+            <h1 className="text-base font-semibold leading-6 text-gray-200">Renders by Month</h1>
+            <p className="mt-2 text-sm text-gray-400">
+              A list of the total page renders for each month.
+            </p>
+          </div>
+        </div>
+        <SortableTable rows={renderCounts} />
+      </div>
+  );
+}
+
+function EmptyDashboard() {
   return (
       <div className="text-center">
         <svg
