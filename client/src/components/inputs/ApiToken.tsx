@@ -1,9 +1,9 @@
 import {Input} from "@/components/base/inputs/Input";
 import {useState} from "react";
-import {FaCheck, FaCopy, FaEye, FaEyeSlash} from "react-icons/all";
-import {cn} from "@/lib/utils";
+import {FaEye, FaEyeSlash} from "react-icons/all";
 import {poll} from "@/api/call";
 import {IconButton} from "@/components/base/buttons/IconButton";
+import {CopyButton} from "@/components/buttons/CopyButton";
 
 export function ApiToken() {
   const [isHidden, setIsHidden] = useState(true);
@@ -25,19 +25,3 @@ export function ApiToken() {
   )
 }
 
-/** A button that allows copying `value` to the clipboard. */
-function CopyButton({value}: {value: string}) {
-  const [isCopied, setIsCopied] = useState(false);
-
-  const CopyIcon = isCopied ? FaCheck : FaCopy;
-  return (
-      <IconButton icon={CopyIcon}
-          className={cn(isCopied && 'text-green-700 hover:text-green-500')}
-          onClick={() => {
-            navigator.clipboard.writeText(value).then(() => {
-              setIsCopied(true);
-              setTimeout(() => setIsCopied(false), 1_500);
-            });
-          }} />
-  )
-}

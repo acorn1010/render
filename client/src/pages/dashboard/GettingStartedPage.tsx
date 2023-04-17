@@ -2,10 +2,11 @@ import {FaAngular, FaReact, FaVuejs} from "react-icons/all";
 import {poll} from "@/api/call";
 import {DashboardCard} from "@/components/cards/DashboardCard";
 import Prism from 'prismjs';
-import {useEffect, useRef} from "react";
+import {PropsWithChildren, useEffect, useRef} from "react";
 import cloudflareWorker from './cloudflare_worker.js?raw';
 import './prism.css';
 import {cn} from "@/lib/utils";
+import {CopyButton} from "@/components/buttons/CopyButton";
 
 export default function GettingStartedPage() {
   const token = poll.use('getProfile')?.token ?? '';
@@ -31,8 +32,16 @@ export default function GettingStartedPage() {
           <li>Click on <span className='bg-zinc-800 p-1 rounded'>Create a Service</span>.</li>
           <li>Give your service a name you'll remember (e.g. <StringText text='"spa-seo"' />).</li>
           <li>
-            Paste the following worker script{tokenText}:
-            <CodeBlock className='[&>:nth-child(5)]:!text-transparent [&>:nth-child(5)]:text-shadow-none' code={code} language='javascript' />
+            <span>Paste the following worker script{tokenText}:</span>
+            <CodeBlock
+                classes={{
+                  root: 'mt-2',
+                  pre: 'max-h-96',
+                  code: '[&>:nth-child(5)]:!text-transparent [&>:nth-child(5)]:text-shadow-none',
+                }}
+                code={code}
+                language='javascript'>
+            </CodeBlock>
           </li>
           <li>Test that you're being served rendered HTML by changing your UserAgent to <StringText text='"bingbot"' /> or <StringText text='"googlebot"' />:
             <ul className='flex items-start flex-col gap-2 list-disc ml-4'>
@@ -45,7 +54,8 @@ export default function GettingStartedPage() {
   );
 }
 
-function CodeBlock({className, code, language}: {className?: string, code: string, language: 'javascript'}) {
+type CodeBlockProps = PropsWithChildren<{classes?: {root?: string, pre?: string, code?: string}, code: string, language: 'javascript'}>;
+function CodeBlock({classes, code, language}: CodeBlockProps) {
   const codeRef = useRef<HTMLPreElement>(null);
 
   const element = codeRef.current;
@@ -56,9 +66,15 @@ function CodeBlock({className, code, language}: {className?: string, code: strin
   }, [code, element]);
 
   return (
-      <pre>
-        <code className={cn(`language-${language}`, className)} ref={codeRef}>{code}</code>
-      </pre>
+      <div className={classes?.root}>
+        <div className='flex items-center justify-between bg-gray-700 py-2 px-4 rounded-t-md'>
+          <p>{language}</p>
+          <CopyButton className='text-gray-100 hover:bg-gray-600 active:bg-gray-800' value={code} />
+        </div>
+        <pre className={cn('!rounded-t-none !mt-0', classes?.pre)}>
+          <code className={cn(`language-${language}`, classes?.code)} ref={codeRef}>{code}</code>
+        </pre>
+      </div>
   );
 }
 
