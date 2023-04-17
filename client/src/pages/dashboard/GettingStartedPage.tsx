@@ -1,10 +1,16 @@
 import {FaAngular, FaReact, FaVuejs} from "react-icons/all";
 import {poll} from "@/api/call";
 import {DashboardCard} from "@/components/cards/DashboardCard";
+import Prism from 'prismjs';
+import {useEffect, useRef} from "react";
+import cloudflareWorker from './cloudflare_worker.js?raw';
+import './prism.css';
+import {cn} from "@/lib/utils";
 
 export default function GettingStartedPage() {
-  const token = poll.use('getProfile')?.token;
+  const token = poll.use('getProfile')?.token ?? '';
   const tokenText = token && <span className='text-gray-400'> (the script already has your API key)</span>;
+  const code = cloudflareWorker.replace("API_KEY = '';", `API_KEY = '${token}';`);
   return (
       <DashboardCard className='flex-center flex-col'>
         <h1 className='text-3xl text-center mb-4'>How to Render Your Single Page App for SEO</h1>
@@ -24,7 +30,10 @@ export default function GettingStartedPage() {
           <li>Go to <span className='bg-zinc-800 p-1 rounded'>{'Workers > Overview'}</span>.</li>
           <li>Click on <span className='bg-zinc-800 p-1 rounded'>Create a Service</span>.</li>
           <li>Give your service a name you'll remember (e.g. <StringText text='"spa-seo"' />).</li>
-          <li>Paste the following worker script{tokenText}:</li>
+          <li>
+            Paste the following worker script{tokenText}:
+            <CodeBlock className='[&>:nth-child(5)]:!text-transparent [&>:nth-child(5)]:text-shadow-none' code={code} language='javascript' />
+          </li>
           <li>Test that you're being served rendered HTML by changing your UserAgent to <StringText text='"bingbot"' /> or <StringText text='"googlebot"' />:
             <ul className='flex items-start flex-col gap-2 list-disc ml-4'>
               <CommandListItem text='curl -A bingbot https://yourdomain.com' />
@@ -33,6 +42,23 @@ export default function GettingStartedPage() {
           </li>
         </ol>
       </DashboardCard>
+  );
+}
+
+function CodeBlock({className, code, language}: {className?: string, code: string, language: 'javascript'}) {
+  const codeRef = useRef<HTMLPreElement>(null);
+
+  const element = codeRef.current;
+  useEffect(() => {
+    if (element) {
+      Prism.highlightElement(element);
+    }
+  }, [code, element]);
+
+  return (
+      <pre>
+        <code className={cn(`language-${language}`, className)} ref={codeRef}>{code}</code>
+      </pre>
   );
 }
 

@@ -12,6 +12,10 @@
   .flex-center {
     @apply flex justify-center items-center
   }
+
+  .text-shadow-none {
+    text-shadow: none;
+  }
 }
 
 html {
