@@ -17,12 +17,12 @@ export default function GettingStartedPage() {
         <p className='text-gray-300 mt-4'>Boost the SEO of your JavaScript Single Page App (SPA) by rendering your content to HTML. This allows search engines to index your website, making it more visible to users. Follow these simple steps to pre-render your SPA using a Cloudflare Worker.</p>
 
         <h2 className='text-2xl mt-6 text-center'>Requirements</h2>
-        <ul className='flex flex-col gap-2 list-disc m-4'>
+        <ul className='flex flex-col gap-2 list-disc m-4 [&_*::marker]:text-zinc-500'>
           <li>Assumes you're using Cloudflare's CDN.</li>
         </ul>
 
         <h2 className='text-2xl mt-6 text-center'>Steps</h2>
-        <ol className='flex flex-col gap-2 list-decimal m-4'>
+        <ol className='flex flex-col gap-2 list-decimal m-4 [&_*::marker]:text-zinc-500'>
           <li>Open your <a className='text-blue-400 hover:text-blue-300' href='https://dash.cloudflare.com' target='_blank'>CloudFlare dashboard</a>.</li>
           <li>Go to <span className='bg-zinc-800 p-1 rounded'>{'Workers > Overview'}</span>.</li>
           <li>Click on <span className='bg-zinc-800 p-1 rounded'>Create a Service</span>.</li>
