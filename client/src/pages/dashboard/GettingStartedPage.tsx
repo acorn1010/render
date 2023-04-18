@@ -25,8 +25,11 @@ export default function GettingStartedPage() {
         <ol className='flex flex-col gap-2 list-decimal m-4 [&_*::marker]:text-zinc-500'>
           <li>Open your <a className='text-blue-400 hover:text-blue-300' href='https://dash.cloudflare.com' target='_blank'>CloudFlare dashboard</a>.</li>
           <li>Go to <span className='bg-zinc-800 p-1 rounded'>{'Workers > Overview'}</span>.</li>
-          <li>Click on <span className='bg-zinc-800 p-1 rounded'>Create a Service</span>.</li>
-          <li>Give your service a name you'll remember (e.g. <StringText text='"spa-seo"' />).</li>
+          <li>Click on <FakeCloudflareButton text='Create a Service' />.</li>
+          <li>Give your service a name you'll remember (e.g. <StringText text='"spa-seo"' />), then click <FakeCloudflareButton text='Create service' />.</li>
+          <li>Click on Triggers then <FakeCloudflareButton text='Add route' />.</li>
+          <li>Add your route (e.g. <span className='bg-zinc-800 p-1 rounded'>example.com/*</span>)</li>
+          <li>Now click on <FakeCloudflareButton text='Quick edit' /> in the top-right.</li>
           <li>
             <span>Paste the following worker script{tokenText}:</span>
             <CodeBlock
@@ -39,6 +42,7 @@ export default function GettingStartedPage() {
                 language='javascript'>
             </CodeBlock>
           </li>
+          <li>Finally, click <FakeCloudflareButton text='Save and deploy' />.</li>
           <li>Test that you're being served rendered HTML by changing your UserAgent to <StringText text='"bingbot"' /> or <StringText text='"googlebot"' />:
             <ul className='flex items-start flex-col gap-2 list-disc ml-4'>
               <CommandListItem text='curl -A bingbot https://yourdomain.com' />
@@ -48,6 +52,10 @@ export default function GettingStartedPage() {
         </ol>
       </DashboardCard>
   );
+}
+
+function FakeCloudflareButton({text}: {text: string}) {
+  return <span className='bg-blue-900 p-1 rounded'>{text}</span>;
 }
 
 function StringText({text}: {text: string}) {
