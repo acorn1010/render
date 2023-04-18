@@ -9,7 +9,7 @@ export default function GettingStartedPage() {
   const tokenText = token && <span className='text-gray-400'> (the script already has your API key)</span>;
   const code = cloudflareWorker.replace("API_KEY = '';", `API_KEY = '${token}';`);
   return (
-      <DashboardCard className='flex-center flex-col'>
+      <DashboardCard className='flex flex-col'>
         <h1 className='text-3xl text-center mb-4'>How to Render Your Single Page App for SEO</h1>
         <div className='flex-center text-3xl gap-2'>
           <FaReact className='text-[#43c3ec]' /><FaVuejs className='text-[#42b883]' /><FaAngular className='text-[#dd1b16]' />
@@ -17,7 +17,7 @@ export default function GettingStartedPage() {
         <p className='text-gray-300 mt-4'>Boost the SEO of your JavaScript Single Page App (SPA) by rendering your content to HTML. This allows search engines to index your website, making it more visible to users. Follow these simple steps to pre-render your SPA using a Cloudflare Worker.</p>
 
         <h2 className='text-2xl mt-6 text-center'>Requirements</h2>
-        <ul className='flex flex-col gap-2 list-disc m-4 [&_*::marker]:text-zinc-500'>
+        <ul className='flex flex-col m-auto gap-2 list-disc mt-2 [&_*::marker]:text-zinc-500'>
           <li>Assumes you're using Cloudflare's CDN.</li>
         </ul>
 

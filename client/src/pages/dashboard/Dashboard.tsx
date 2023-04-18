@@ -26,7 +26,7 @@ export default function Dashboard() {
 /** Adds a Navbar / side panel to the dashboard. Included in every dashboard route. */
 function DashboardContainer({children}: PropsWithChildren<{}>) {
   return (
-      <div className='flex h-full min-h-[100vh]'>
+      <div className='grid grid-cols-[auto_minmax(0,1fr)] h-full min-h-[100vh]'>
         <Sidebar />
         <div className='flex flex-col w-full relative'>
           <Navbar />

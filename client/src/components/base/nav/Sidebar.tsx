@@ -14,7 +14,7 @@ const docs = [
 
 export function Sidebar() {
   return (
-      <div className="flex grow flex-col items-center overflow-y-auto bg-gray-800 min-w-[64px] w-16 lg:w-56">
+      <div className="flex grow flex-col items-center overflow-y-auto bg-gray-800 min-w-[64px] w-16 lg:w-56 lg:min-w-[224px]">
         <div className="flex-center h-14 shrink-0 bg-gray-950 w-full z-10">
           <img
               className="h-8 w-auto"
