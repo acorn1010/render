@@ -35,8 +35,9 @@ export function SortableTable<T extends {[key: string]: number | string}>({rows:
                   {keys.map(key => (
                       <th key={key as string} scope="col" className="p-2 text-left text-sm font-semibold text-gray-300">
                         <button onClick={() => setSort(prevState => {
-                          if (prevState?.column === key) {
-                            return {column: key, dir: prevState.dir === 'asc' ? 'desc' : 'asc'};
+                          const prev = prevState ?? {column: keys[0], dir: 'asc'};
+                          if (prev?.column === key) {
+                            return {column: key, dir: prev.dir === 'asc' ? 'desc' : 'asc'};
                           }
                           return {column: key, dir: 'asc'};
                         })} className={cn(

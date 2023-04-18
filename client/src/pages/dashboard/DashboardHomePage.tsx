@@ -26,7 +26,10 @@ function MonthlyRenderTable({renderCounts}: {renderCounts: {month: string, rende
             </p>
           </div>
         </div>
-        <SortableTable rows={renderCounts} />
+        <SortableTable
+            rows={renderCounts.map(
+                ({month, renderCount}) => ({'Month': month, 'Render Count': renderCount})
+            )} />
       </div>
   );
 }
