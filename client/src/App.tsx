@@ -6,18 +6,24 @@ import * as React from "react";
 import {AuthRoute, Route} from "@/Route";
 
 export function App() {
-  useAuth();
-
   return (
-      <SiteTheme>
-        <Switch>
-          <AuthRoute type='guest' path='/login' lazy={() => import('./pages/LoginPage')} />
-          <Route path='/logout' lazy={() => import('./pages/LogoutPage')} />
-          <Route path='/404' lazy={() => import('./pages/NotFoundPage')} />
+      <>
+        <AuthUpdater />
+        <SiteTheme>
+          <Switch>
+            <AuthRoute type='guest' path='/login' lazy={() => import('./pages/LoginPage')} />
+            <Route path='/logout' lazy={() => import('./pages/LogoutPage')} />
+            <Route path='/404' lazy={() => import('./pages/NotFoundPage')} />
 
-          {/* Dashboard routes. Because dashboard is at the root, we need a catch-all */}
-          <AuthRoute type='auth'><Dashboard /></AuthRoute>
-        </Switch>
-      </SiteTheme>
+            {/* Dashboard routes. Because dashboard is at the root, we need a catch-all */}
+            <AuthRoute type='auth'><Dashboard /></AuthRoute>
+          </Switch>
+        </SiteTheme>
+      </>
   );
+}
+
+function AuthUpdater() {
+  useAuth();
+  return null;
 }
