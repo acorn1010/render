@@ -3,7 +3,7 @@ set -e
 
 # This is the only section you should modify if creating a new deployment.
 # TODO(acorn1010): Move the rest of this script into the kubernetes/ folder
-export HOST="render.acorn1010.com"
+export HOST="api.rendermy.site"
 export NAMESPACE="prerender"
 export REPLICAS=5  # Number of server instances to spin up
 export CPU="700m"  # Request 0.7 vCPUs

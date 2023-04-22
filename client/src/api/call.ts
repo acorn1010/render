@@ -90,7 +90,7 @@ export const call: {[K in keyof Actions]: (...args: CallArgs<K>) => Promise<Acti
 
 async function _call<T extends keyof Actions>(
     action: T, ...args: CallArgs<T>): Promise<Actions[T]['output']> {
-  const url = import.meta.env.DEV ? 'http://localhost:3000/api' : 'https://render.acorn1010.com/api';
+  const url = import.meta.env.DEV ? 'http://localhost:3000/api' : 'https://api.rendermy.site/api';
   authToken = await queryAuthToken();
   const response = await fetch(url, {
     method: 'POST',
