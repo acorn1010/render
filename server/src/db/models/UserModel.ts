@@ -39,7 +39,7 @@ export class UserModel {
     // query.
     const months = range(-12, 1).map(monthOffset => getYyyyMm(monthOffset));
     const result = await this.redis.mget(months.map(month => `users:${userId}:renderCounts:${month}`));
-    return result.map((count, i) => count === null ? null : {month: months[i], renderCount: parseInt(count)}).filter(value => value !== null) as any;
+    return result.map((count, i) => ({month: months[i], renderCount: count === null ? 0 : parseInt(count)}));
   }
 
   /**
