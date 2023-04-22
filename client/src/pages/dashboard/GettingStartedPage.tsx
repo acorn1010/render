@@ -1,11 +1,11 @@
 import {FaAngular, FaReact, FaVuejs} from "react-icons/all";
-import {poll} from "@/api/call";
 import {DashboardCard} from "@/components/cards/DashboardCard";
 import cloudflareWorker from './cloudflare_worker.js?raw';
 import {CodeBlock} from "@/components/base/blocks/CodeBlock";
+import {useApiToken} from "@/auth/useApiToken";
 
 export default function GettingStartedPage() {
-  const token = poll.use('getProfile')?.token ?? '';
+  const token = useApiToken();
   const tokenText = token && <span className='text-gray-400'> (the script already has your API key)</span>;
   const code = cloudflareWorker.replace("API_KEY = '';", `API_KEY = '${token}';`);
   return (

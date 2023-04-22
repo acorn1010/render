@@ -1,13 +1,13 @@
 import {Input} from "@/components/base/inputs/Input";
 import {useState} from "react";
 import {FaEye, FaEyeSlash} from "react-icons/all";
-import {poll} from "@/api/call";
 import {IconButton} from "@/components/base/buttons/IconButton";
 import {CopyButton} from "@/components/buttons/CopyButton";
+import {useApiToken} from "@/auth/useApiToken";
 
 export function ApiToken() {
   const [isHidden, setIsHidden] = useState(true);
-  const token = poll.use('getProfile')?.token ?? '';
+  const token = useApiToken();
 
   const EyeIcon = isHidden ? FaEyeSlash : FaEye;
   return (
