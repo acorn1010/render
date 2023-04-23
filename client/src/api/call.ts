@@ -2,6 +2,7 @@ import {Actions} from 'shared/Action';
 import {useEffect} from "react";
 import {authStore} from "@/auth/authStore";
 import {createGlobalStore} from "@/state/createGlobalStore";
+import {Multiset} from "shared/collections/Multiset";
 
 type CallArgs<T extends keyof Actions> = Actions[T]['input'] extends any[]
     ? Actions[T]['input']
@@ -14,6 +15,53 @@ type CallArgs<T extends keyof Actions> = Actions[T]['input'] extends any[]
 const LONG_POLL_INTERVAL_MS = 10_000;
 
 const pollStore = createGlobalStore({} as {[key: string]: any});
+
+class PollSingleton {
+  /** Maps a JSON.stringify() of action + props -> number of listeners. */
+  private readonly refs = new Multiset<string>();
+
+  /**
+   * Maps a key (JSON.stringify()) of action + props -> interval timer. Use this when removing a
+   * listener.
+   */
+  private readonly unsubscribePaths = new Map<string, ReturnType<typeof setInterval>>();
+
+  connect<T extends keyof Actions>(action: T, ...args: CallArgs<T>) {
+    const key = JSON.stringify([action, ...args]);
+    if (this.refs.add(key) !== 1) {
+      return;  // Not the first connection. No need to establish a listener.
+    }
+
+    // This is the first connection. Set up a long-polling listener.
+    const refresh = async () => {
+      try {
+        // NOTE: It's possible that we've updated the client's state in the time we've started
+        // fetching from the server. If so, don't update the local state.
+        const oldState = pollStore.get(key);
+        const result = await call[action](...args);
+        if (oldState === pollStore.get(key)) {
+          pollStore.set(key, result);  // State is still the same. It's safe to replace!
+        }
+      } catch (e) {
+        console.error(`Failed to do long poll for ${action} with args: ${args}`, e);
+      }
+    };
+    this.unsubscribePaths.set(key, setInterval(refresh, LONG_POLL_INTERVAL_MS));
+    refresh().then(() => {});
+  }
+
+  close<T extends keyof Actions>(action: T, ...args: CallArgs<T>) {
+    const key = JSON.stringify([action, ...args]);
+    if (!this.refs.remove(key)) {
+      throw new Error(`Tried to close a connection that was never opened. Did you mutate poll.use args?: ${key}`);
+    }
+    if (!this.refs.has(key)) {
+      clearInterval(this.unsubscribePaths.get(key)!);
+    }
+  }
+}
+/** Tracks the open connections, deduping poll requests where necessary. */
+const pollSingleton = new PollSingleton();
 
 /**
  * Allows periodic polling of state from the server. This is essentially a "slow" pub/sub without
@@ -49,27 +97,12 @@ export const poll = {
    */
   use: <T extends keyof Actions>(action: T, ...args: CallArgs<T>): Actions[T]['output'] | undefined => {
     const key = JSON.stringify([action, ...args]);
-    const [result, setResult] = pollStore.use(key);
+    const [result] = pollStore.use(key);
 
     useEffect(() => {
-      const refresh = async () => {
-        try {
-          // NOTE: It's possible that we've updated the client's state in the time we've started
-          // fetching from the server. If so, don't update the local state.
-          const oldState = pollStore.get(key);
-          const result = await call[action](...args);
-          if (oldState === pollStore.get(key)) {
-            setResult(result);  // State is still the same. It's safe to replace!
-          }
-        } catch (e) {
-          console.error(`Failed to do long poll for ${action} with args: ${args}`, e);
-        }
-      };
-      const timer = setInterval(refresh, LONG_POLL_INTERVAL_MS);
-      refresh().then(() => {});
-
+      pollSingleton.connect(action, ...args);
       return () => {
-        clearInterval(timer);
+        setTimeout(() => pollSingleton.close(action, ...args), LONG_POLL_INTERVAL_MS);
       };
     }, [action, ...args]);
 
