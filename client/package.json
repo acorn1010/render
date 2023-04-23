@@ -4,9 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "postinstall": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
     "dev": "vite",
-    "prebuild": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
     "build": "tsc && vite build",
     "deploy": "npm i && npm run build",
     "preview": "vite preview"

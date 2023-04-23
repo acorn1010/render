@@ -1,4 +1,4 @@
-import {Actions} from 'render-shared-library/lib/Action';
+import {Actions} from 'shared/Action';
 import {useEffect} from "react";
 import {authStore} from "@/auth/authStore";
 import {createGlobalStore} from "@/state/createGlobalStore";
