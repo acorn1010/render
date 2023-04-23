@@ -1,8 +1,8 @@
-import {Actions} from 'shared/Action';
+import {Actions} from "@shared/Action";
 import {useEffect} from "react";
 import {authStore} from "@/auth/authStore";
 import {createGlobalStore} from "@/state/createGlobalStore";
-import {Multiset} from "shared/collections/Multiset";
+import {Multiset} from "@shared/collections/Multiset";
 
 type CallArgs<T extends keyof Actions> = Actions[T]['input'] extends any[]
     ? Actions[T]['input']

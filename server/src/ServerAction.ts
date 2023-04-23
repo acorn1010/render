@@ -1,4 +1,4 @@
-import {Actions} from "render-shared-library/lib/Action";
+import {Actions} from "@shared/Action";
 import {CallableContext} from "./http/CallableContext";
 
 type Promisable<T> = T | Promise<T>;

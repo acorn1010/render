@@ -1,4 +1,4 @@
-import {Actions} from "render-shared-library/lib/Action";
+import {Actions} from "@shared/Action";
 import {ServerAction} from "../ServerAction";
 import {flush} from "./flush";
 import {getMonthlyRenderCounts} from "./getMonthlyRenderCounts";

@@ -2,7 +2,7 @@ import Redis from "ioredis";
 import {Pretty} from "../../types/ExtraTypes";
 import {isNil, range} from "lodash";
 import {getYyyyMm} from "../../TimeUtils";
-import { User } from "render-shared-library/lib/models/User";
+import { User } from "@shared/models/User";
 import {REFRESH_USER_TOKEN} from "../lua";
 
 export const DEFAULT_USER = {

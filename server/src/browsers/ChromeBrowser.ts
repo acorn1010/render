@@ -5,7 +5,7 @@ import {shuffle} from "lodash";
 import {renderAndCache} from "../api/render";
 import {RenderResponse} from "../db/models/UrlModel";
 import minimatch from "minimatch";
-import { User } from "render-shared-library/lib/models/User";
+import { User } from "@shared/models/User";
 
 /** Maximum lifetime of the browser before it gets killed and recreated. */
 const BROWSER_MAX_LIFETIME_MS = 10 * 60_000;

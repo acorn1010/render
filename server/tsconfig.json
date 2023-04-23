@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
+    "baseUrl": ".",
     "module": "CommonJS",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "outDir": "lib",
-    "rootDir": "src",
+    "rootDirs": ["src", "../shared/src"],
     "types": ["node"],
     "sourceMap": true,
     "strict": true,
@@ -16,10 +16,14 @@
     "target": "ES2021",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "paths": {"@server/*": ["src/*"]}
+    "paths": {
+      "@server/*": ["src/*"],
+      "@shared/*": ["../shared/src/*"]
+    }
   },
   "compileOnSave": true,
   "include": [
-    "src/**/*"
+    "src",
+    "../shared/src"
   ]
 }

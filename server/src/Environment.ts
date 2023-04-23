@@ -2,8 +2,8 @@ import Redis from "ioredis";
 import * as dotenv from 'dotenv';
 import {RedisWrapper} from "./db/RedisWrapper";
 import Ajv from "ajv";
-import {Actions} from 'render-shared-library/lib/Action';
-import * as apiSchema from 'render-shared-library/lib/api_schema.json';
+import {Actions} from '@shared/Action';
+import * as apiSchema from '@shared/api_schema.json';
 import {ServerActions} from "./api";
 dotenv.config();
 

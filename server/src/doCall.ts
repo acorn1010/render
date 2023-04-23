@@ -1,5 +1,5 @@
 import {FastifyReply, FastifyRequest} from "fastify";
-import {Actions} from "render-shared-library/lib/Action";
+import {Actions} from "@shared/Action";
 import {env} from "./Environment";
 import {HttpsError} from "./http/HttpsError";
 import {ServerActions} from "./api";

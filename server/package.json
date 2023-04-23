@@ -3,19 +3,18 @@
   "version": "1.0.0",
   "description": "Service for rendering webpages with headless Chrome.",
   "author": "Acorn1010",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/server/src/index.js",
+  "types": "lib/server/src/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
     "__comment": "tsc doesn't respect non-ts files, so we have to roll our own file copy in the build process: https://github.com/microsoft/TypeScript/issues/30835. TODO(acorn1010): try out tsc -w for start.",
     "lint": "eslint 'src/**'",
-    "postinstall": "(cd ../shared && npm run build) && npm link \"render-shared-library\"",
-    "prebuild": "del lib/ && (cd ../shared && npm run build) && npm link \"render-shared-library\"",
-    "build": "tsc",
-    "postbuild": "cpy 'src/**/*' '!**/*.ts' '!**/*.d.ts' '!**/*.d.ts.map' lib",
-    "start": "node lib/index.js"
+    "prebuild": "del lib/",
+    "build": "tsc && tsc-alias",
+    "postbuild": "cpy 'src/**/*' '!**/*.ts' '!**/*.d.ts' '!**/*.d.ts.map' lib/server/src",
+    "start": "node lib/server/src/index.js"
   },
   "engines": {
     "node": "18"
@@ -45,7 +44,8 @@
     "@types/node": "^18.11.18",
     "cpy-cli": "^4.2.0",
     "del-cli": "^5.0.0",
-    "typescript": "^4.9.5"
+    "tsc-alias": "^1.8.5",
+    "typescript": "^5.0.4"
   },
   "private": true
 }
