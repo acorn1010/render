@@ -11,4 +11,8 @@ export default defineConfig({
         {find: "@shared", replacement: path.resolve(__dirname, "../shared/src")},
     ],
   },
+  esbuild: {
+    /** default is "eof", which takes up ~15% in the js files uncompressed (2% compressed). */
+    legalComments: 'external',
+  },
 });
