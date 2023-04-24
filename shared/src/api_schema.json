@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Action": {
+      "enum": [
+        "flush",
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
+      ],
+      "type": "string"
+    },
+    "ActionInputs": {
+      "additionalProperties": false,
+      "description": "This type is required by ts-json-schema so we can generate proper",
+      "properties": {
+        "flush": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        },
+        "getMonthlyRenderCounts": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        },
+        "getProfile": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        },
+        "refreshToken": {
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array"
+        }
+      },
+      "required": [
+        "flush",
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
+      ],
+      "type": "object"
+    },
+    "Actions": {
+      "additionalProperties": false,
+      "description": "Actions that can be sent to the server via the server API #call function. The value follows a special namespacing format. Before the first _ is the functions/src/actions/ filename that will have its #run method be executed. After that, the rest is action-specific. For example, game actions are of the form \"GameAction_{gameId}_{methodName}\".",
+      "properties": {
+        "flush": {
+          "additionalProperties": false,
+          "description": "Flushes the domains of the user.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "getMonthlyRenderCounts": {
+          "additionalProperties": false,
+          "description": "Returns the page renders done by month for the user.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "month": {
+                    "type": "string"
+                  },
+                  "renderCount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "month",
+                  "renderCount"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "getProfile": {
+          "additionalProperties": false,
+          "description": "Retrieves information about a user's profile.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "refreshToken": {
+          "additionalProperties": false,
+          "description": "Refreshes a user's API key, returning their new API key.",
+          "properties": {
+            "input": {
+              "maxItems": 0,
+              "minItems": 0,
+              "type": "array"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "flush",
+        "getMonthlyRenderCounts",
+        "getProfile",
+        "refreshToken"
+      ],
+      "type": "object"
+    },
+    "User": {
+      "additionalProperties": false,
+      "properties": {
+        "ignoredPaths": {
+          "description": "Wildcard patterns, such as \"foo.com/games/*\". You shouldn't specify the http:// prefix. If a pattern starts with \"*\" followed by \"/\", then it will apply to all domains.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "shouldRefreshCache": {
+          "description": "If `true`, the pages that were fetched in the last month will be refreshed right before they expire from the cache.",
+          "type": "boolean"
+        },
+        "token": {
+          "description": "The user's private API key. Used to make requests via Cloudflare Workers / HTTPS.",
+          "type": "string"
+        },
+        "wildcard404": {
+          "description": "Wildcard to match the page title for 404 pages. These pages will return a `404` status code.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "wildcard404",
+        "shouldRefreshCache",
+        "ignoredPaths",
+        "token"
+      ],
+      "type": "object"
+    }
+  }
+}

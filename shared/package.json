@@ -12,7 +12,7 @@
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "prebuild": "./node_modules/.bin/ts-json-schema-generator --tsconfig './tsconfig.json' --path 'src/Action.ts' > src/api_schema.json",
-    "build": "tsc && npm link && (cd ../server && npm link \"render-shared-library\") && ((cd ../client && npm link \"render-shared-library\") || exit 0)",
+    "build": "tsc",
     "deploy": "npm i && npm run build && npm link",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
