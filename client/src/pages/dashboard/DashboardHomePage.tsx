@@ -29,7 +29,9 @@ function MonthlyRenderTable({renderCounts}: {renderCounts: {month: string, rende
         <SortableTable
             rows={renderCounts.map(
                 ({month, renderCount}) => ({'Month': month, 'Render Count': renderCount})
-            )} />
+            )}
+            defaultSort={{column: 'Month', dir: 'desc'}}
+        />
       </div>
   );
 }

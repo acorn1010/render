@@ -4,8 +4,19 @@ import {FaChevronDown, FaChevronUp} from "react-icons/all";
 import {localizeNumber} from "@/lib/StringUtils";
 
 const RESULTS_PER_PAGE = 100;
-export function SortableTable<T extends {[key: string]: number | string}>({rows: unsortedRows}: {rows: T[]}) {
-  const [sortOrDefault, setSort] = useState<{column: keyof T, dir: 'asc' | 'desc'} | null>(null);
+
+type SortedTableProps<T extends {[key: string]: number | string}> = {
+  /** The rows in the table. */
+  rows: T[],
+
+  /** If provided, this is the default sort that will be applied to the table. */
+  defaultSort?: {column: keyof T, dir: 'asc' | 'desc'},
+};
+
+export function SortableTable<T extends {[key: string]: number | string}>(props: SortedTableProps<T>) {
+  const {rows: unsortedRows, defaultSort} = props;
+  const [sortOrDefault, setSort] =
+      useState<{column: keyof T, dir: 'asc' | 'desc'} | null>(defaultSort ?? null);
 
   const [page] = useState(0);  // TODO(acorn1010): Add support for pagination
   const keys = Object.keys(unsortedRows[0] ?? {}) as (keyof T)[];
