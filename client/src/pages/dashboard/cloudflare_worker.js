@@ -130,7 +130,7 @@ addEventListener('fetch', event => {
  */
 function prerenderRequest(request) {
     const {url, headers} = request;
-    const base = 'https://render.acorn1010.com';
+    const base = 'https://api.rendermy.site';
     const prerenderUrl = `${base}/${url}`;
 
     const headersToSend = new Headers(headers);
