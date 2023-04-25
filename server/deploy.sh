@@ -36,4 +36,3 @@ export DOCKER_IMAGE="${DOCKER_IMAGE}:${VERSION}"
 export GCR_SECRET="${GCR_SECRET}"  # Needed so that K3s can pull the docker image
 
 envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig=../kubernetes/kubeconfig apply -f -
-envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig="${HOME}/.kube/config.joes" apply -f -
