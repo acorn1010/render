@@ -22,7 +22,7 @@ controller:
    # - hel1 (Helsinki)
    # USA:
    # - ash (Ashburn, Virginia)
-      # - hil (Hillsboro, Oregon)
+   # - hil (Hillsboro, Oregon)
    # Without this the load balancer won't be provisioned and will stay in "pending" state.
    # The state you can check via "kubectl get svc -n ingress-nginx"
    load-balancer.hetzner.cloud/location: $CLUSTER_LOCATION
