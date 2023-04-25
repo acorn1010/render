@@ -211,7 +211,7 @@ class Refetcher {
           this.scheduleInterval();
         }
       }
-    }, 100);
+    }, 5_000);  // Wait 5 seconds before checking for expiring pages.
   }
 
   private async render() {
