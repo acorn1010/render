@@ -12,7 +12,7 @@
     "__comment": "tsc doesn't respect non-ts files, so we have to roll our own file copy in the build process: https://github.com/microsoft/TypeScript/issues/30835. TODO(acorn1010): try out tsc -w for start.",
     "lint": "eslint 'src/**'",
     "prebuild": "del lib/",
-    "build": "tsc && tsc-alias",
+    "build": "(cd ../shared && npm run build) && tsc && tsc-alias",
     "postbuild": "cpy 'src/**/*' '!**/*.ts' '!**/*.d.ts' '!**/*.d.ts.map' lib/server/src",
     "start": "node lib/server/src/index.js"
   },
@@ -35,7 +35,7 @@
     "nanoid": "^3.3.4",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.1",
-    "puppeteer": "^19.6.3",
+    "playwright": "^1.32.2",
     "url": "^0.11.0",
     "zod": "^3.21.0"
   },

@@ -1,5 +1,10 @@
-import {ConsoleMessage, ConsoleMessageType, JSHandle, Page} from "puppeteer";
 import {RenderResponse} from "../db/models/UrlModel";
+import {ConsoleMessage, JSHandle, Page} from "playwright";
+
+export type ConsoleMessageType =
+    'log' | 'debug' | 'info' | 'error' | 'warning' | 'dir' | 'dirxml' | 'table' | 'trace' | 'clear'
+    | 'startGroup' | 'startGroupCollapsed' | 'endGroup' | 'assert' | 'profile' | 'profileEnd'
+    | 'count' | 'timeEnd';
 
 /**
  * Waits for the DOM to finish rendering. If there are no DOM changes for `debounceMs`, then the
@@ -8,7 +13,7 @@ import {RenderResponse} from "../db/models/UrlModel";
 export async function waitForDomToSettle(page: Page, timeoutMs = 5_000, debounceMs = 750): Promise<void> {
   const url = page.url();
   return page.evaluate(
-      (timeoutMs, debounceMs, url) => {
+      ([timeoutMs, debounceMs, url]) => {
         function debounce<T extends Function>(func: T, ms = 1_000): T {
           let timeout: ReturnType<typeof setTimeout>;
           return ((...args: unknown[]) => {
@@ -45,9 +50,7 @@ export async function waitForDomToSettle(page: Page, timeoutMs = 5_000, debounce
           debouncedResolve();
         });
       },
-      timeoutMs,
-      debounceMs,
-      url,
+      [timeoutMs, debounceMs, url] as const,
   );
 }
 
@@ -80,7 +83,7 @@ export function logConsole(page: Page, consoleOutput: {type: ConsoleMessageType,
   // listen to browser console there
   page.on('console', async (message: ConsoleMessage) => {
     const args = await Promise.all(message.args().map(arg => describe(arg)));
-    consoleOutput.push({type: message.type(), args});
+    consoleOutput.push({type: message.type() as ConsoleMessageType, args});
   });
 }
 

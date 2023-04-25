@@ -1,4 +1,4 @@
-import puppeteer, {Browser, BrowserContext} from "puppeteer";
+import playwright, {Browser, BrowserContext} from "playwright";
 import {fetchPage, logConsole, waitForDomToSettle} from "./BrowserUtils";
 import {env} from "../Environment";
 import {shuffle} from "lodash";
@@ -38,11 +38,10 @@ class ChromeBrowserRunnerSingleton {
   }
 
   private async recreateBrowser() {
+    console.log('Recreating browser...');
     this.closeBrowser().then(() => {});
-    this.browser = puppeteer.launch({
+    this.browser = playwright.chromium.launch({
       args: ['--hide-scrollbars', '--disable-gpu'],
-      defaultViewport: {width: 1024, height: 768},  // phone layout 375 x 667
-      ignoreHTTPSErrors: true,
     });
     this.createdAt = Date.now();
   }
@@ -52,24 +51,38 @@ class ChromeBrowserRunnerSingleton {
     if (!this.browser) {
       return;
     }
+
+    const start = Date.now();
     // Copy outstanding requests. New requests may come in while this is processing.
     const requests = [...this.outstandingRequests];
     const browserPromise = this.browser;
-    this.userContexts.clear();
     const browser = await browserPromise;
     await Promise.all(requests);  // Wait for requests to complete
+
+    // Close all outstanding contexts
+    const contextPromises = [];
+    for (const context of this.userContexts.values()) {
+      contextPromises.push(context.close().catch(e => console.error('Error closing context: ', e)));
+    }
+    this.userContexts.clear();
+    await Promise.all(contextPromises);
+
     // Close gracefully
+    console.log('Closing browser...');
     await browser.close();
+    console.log('Browser closed!');
     // If this browser is still the same one as the promise, then it doesn't exist anymore, so set
     // it to null.
     if (this.browser === browserPromise) {
       this.browser = null;
       this.userContexts.clear();
     }
+    console.log('Closing the browser took', (Date.now() - start) / 1000, 'seconds');
   }
 
   public async render(url: string, requestHeaders: Record<string, string>): Promise<RenderResponse> {
     const start = Date.now();
+    // While we're at our limit of outstanding requests, wait for one to complete.
     while (this.outstandingRequests.size >= MAX_OUTSTANDING_REQUESTS) {
       await Promise.any(this.outstandingRequests);
     }
@@ -77,8 +90,10 @@ class ChromeBrowserRunnerSingleton {
     // TODO(acorn1010): Browser can crash if it fails to render here. Do we care? Can happen because
     //  of 20s timeout.
     const response = this.renderPage(url, requestHeaders);
+    console.log(`Adding outstanding request for URL: ${url}`);
     this.outstandingRequests.add(response);
     response.finally(() => {
+      console.log(`Removing outstanding request for URL: ${url}`);
       // Remove the outstanding response when it's completed
       this.outstandingRequests.delete(response);
     });
@@ -91,7 +106,7 @@ class ChromeBrowserRunnerSingleton {
     const browser = await this.init();
     // Reuse contexts by the same user / group of users
     const contextKey = getContextKey(requestHeaders);
-    const context = this.userContexts.get(contextKey) || await browser.createIncognitoBrowserContext();
+    const context = this.userContexts.get(contextKey) || await browser.newContext();
     if (context) {
       this.userContexts.set(contextKey, context);
     }
@@ -120,7 +135,7 @@ class ChromeBrowserRunnerSingleton {
       const responseHeaders = response?.headers() ?? {};
       const statusCode = response?.status() ?? 400;
       if (response && !responseHeaders['content-type']?.includes('text/html')) {
-        const buffer = await response.buffer() as Uint8Array;  // TODO(acorn1010): Why is this cast necessary?
+        const buffer = await response.body() as Uint8Array;  // TODO(acorn1010): Why is this cast necessary?
         return {buffer, statusCode, console: responseConsole, headers: responseHeaders};
       }
       return {buffer: Buffer.from(html), statusCode, console: responseConsole, headers: responseHeaders};
@@ -138,7 +153,10 @@ class ChromeBrowserRunnerSingleton {
       throw e;
     } finally {
       // Swallow page close errors. The browser might have already closed by this point.
-      page.close().catch(() => {}).then(() => {});
+      page.close().catch(() => {}).then(() => {
+        console.log(`Page has closed for URL: ${url}.`);
+        // Note: We leave the context running in case another request comes in from the same user.
+      });
     }
   }
 }

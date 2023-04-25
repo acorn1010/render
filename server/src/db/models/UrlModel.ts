@@ -5,7 +5,7 @@ import {DELETE_PATTERN} from "../lua";
 import * as Url from "url";
 import {nanoid} from "nanoid";
 import {getYyyyMm, getYyyyMmDd} from "../../TimeUtils";
-import {ConsoleMessageType} from "puppeteer";
+import {ConsoleMessageType} from "../../browsers/BrowserUtils";
 
 const decompressBrotli = promisify(zlib.brotliDecompress);
 const compressBrotli = promisify(zlib.brotliCompress);

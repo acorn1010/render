@@ -36,11 +36,15 @@ export async function doRequest(req: FastifyRequest, res: FastifyReply, context:
   });
   if (cachedResult) {
     response = cachedResult;
+    // TODO(acorn1010): Remove after 2023-05-01
+    response.headers ||= (response as any).responseHeaders;
+    response.console ||= [];
   }
 
   // TODO(acorn1010): Instead of trying to render this directly, stick it in a worker queue
   //  and wait for it to be finished. This will reduce API flakiness.
   if (!response) {
+    console.log(`No cache. Rendering URL: ${url}`);
     response = await renderAndCache(userId, url, getRequestHeaders(req));
   }
 
