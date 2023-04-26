@@ -229,11 +229,11 @@ class Refetcher {
       if (!userIdToUser.has(userId)) {
         userIdToUser.set(
             userId,
-            await env.redis.user.queryKeys(userId, 'ignoredPaths', 'shouldRefreshCache'));
+            await env.redis.user.get(userId, 'ignoredPaths', 'shouldRefreshCache'));
       }
       // Attempt to acquire a lock. If successful, render the page.
       const start = Date.now();
-      if (!await env.redis.url.acquireLock(userId, url, PAGE_EXPIRATION_MS)) {
+      if (!await env.redis.lock.acquireLock(`render:${userId}|${url}`, PAGE_EXPIRATION_MS)) {
         continue;  // Unable to establish lock. Someone else is rendering this page.
       }
       try {
@@ -254,7 +254,7 @@ class Refetcher {
         // If we still hold the lock, clean it up. Small race condition possible here, but I don't
         // want to make a Lua script just for this, so w/e.
         if (start + PAGE_EXPIRATION_MS > Date.now()) {
-          env.redis.url.removeLock(userId, url).catch((e) => {
+          env.redis.lock.removeLock(`render:${userId}|${url}`).catch((e) => {
             console.error('Failed to remove lock', e);
           });
         }

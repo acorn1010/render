@@ -3,7 +3,6 @@ import {promisify} from "util";
 import zlib from "zlib";
 import {DELETE_PATTERN} from "../lua";
 import * as Url from "url";
-import {nanoid} from "nanoid";
 import {getYyyyMm, getYyyyMmDd} from "../../TimeUtils";
 import {ConsoleMessageType} from "../../browsers/BrowserUtils";
 
@@ -15,8 +14,6 @@ const CACHE_TIME_MS = 60 * 60 * 1_000;
 
 /** Maximum amount of time in ms to fetch a URL before it expires. */
 const REFETCH_BUFFER_MS = 15 * 60_000;
-
-const uuid = nanoid();
 
 export type RenderResponse = {
   renderTimeMs: number,
@@ -36,21 +33,6 @@ export class UrlModel {
   async flush(userId: string): Promise<number> {
     const result = this.redis.eval(DELETE_PATTERN, 1, `users:${userId}`, `users:${userId}:urls:*`);
     return parseInt(result as any);
-  }
-
-  /**
-   * Attempts to acquire a lock for `url` (e.g. "https://foony.com/about") for `expirationMs`
-   * milliseconds, returning `true` on success.
-   */
-  async acquireLock(userId: string, url: string, expirationMs: number) {
-    const key = `urlExpiresAt:workers:${userId}|${url}`;
-    const result = await this.redis.set(key, uuid, 'NX' as any, 'PX' as any, expirationMs as any);
-    return result === 'OK';
-  }
-
-  /** Removes a lock on the `userId-url` pair that was acquired by #acquireLock early. */
-  async removeLock(userId: string, url: string) {
-    this.redis.del(`urlExpiresAt:workers:${userId}|${url}`);
   }
 
   /**

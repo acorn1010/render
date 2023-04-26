@@ -4,5 +4,5 @@ import {getUserId} from "../http/AuthUtils";
 import {ServerAction} from "../ServerAction";
 
 export const getProfile: ServerAction<'getProfile'> = async (context: CallableContext) => {
-  return env.redis.user.queryAllKeys(getUserId(context));
+  return env.redis.user.get(getUserId(context));
 };
