@@ -24,11 +24,11 @@ export default function GettingStartedPage() {
         <h2 className='text-2xl mt-6 text-center'>Steps</h2>
         <ol className='flex flex-col gap-2 list-decimal m-4 [&_*::marker]:text-zinc-500'>
           <li>Open your <a className='text-blue-400 hover:text-blue-300' href='https://dash.cloudflare.com' target='_blank'>CloudFlare dashboard</a>.</li>
-          <li>Go to <span className='bg-zinc-800 p-1 rounded'>{'Workers > Overview'}</span>.</li>
+          <li>Go to <span className='bg-slate-700 p-1 px-2 rounded'>{'Workers > Overview'}</span>.</li>
           <li>Click on <FakeCloudflareButton text='Create a Service' />.</li>
           <li>Give your service a name you'll remember (e.g. <StringText text='"spa-seo"' />), then click <FakeCloudflareButton text='Create service' />.</li>
           <li>Click on Triggers then <FakeCloudflareButton text='Add route' />.</li>
-          <li>Add your route (e.g. <span className='bg-zinc-800 p-1 rounded'>example.com/*</span>)</li>
+          <li>Add your route (e.g. <span className='bg-slate-700 p-1 px-2 rounded-md'>example.com/*</span>)</li>
           <li>Now click on <FakeCloudflareButton text='Quick edit' /> in the top-right.</li>
           <li>
             <span>Paste the following worker script{tokenText}:</span>
@@ -55,7 +55,7 @@ export default function GettingStartedPage() {
 }
 
 function FakeCloudflareButton({text}: {text: string}) {
-  return <span className='bg-blue-900 p-1 rounded'>{text}</span>;
+  return <span className='bg-blue-600 p-1 px-2 rounded-md'>{text}</span>;
 }
 
 function StringText({text}: {text: string}) {
