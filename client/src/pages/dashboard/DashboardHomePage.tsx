@@ -2,14 +2,14 @@ import {FaPlus} from "react-icons/all";
 import {Link} from "wouter";
 import {poll} from "@/api/call";
 import {isLoaded} from "@/state/isLoaded";
-import {Skeleton} from "@/components/base/loading/Skeleton";
 import {SortableTable} from "@/components/tables/SortedTable";
+import { SkeletonTable } from "@/components/base/loading/SkeletonTable";
 
 export default function DashboardHomePage() {
   const renderCounts = poll.use('getMonthlyRenderCounts');
 
   if (!isLoaded(renderCounts)) {
-    return <Skeleton className='h-32' />
+    return <SkeletonTable className='h-32 px-4 sm:px-6 lg:px-8' />
   }
 
   return renderCounts ? <MonthlyRenderTable renderCounts={renderCounts} /> : <EmptyDashboard />;
