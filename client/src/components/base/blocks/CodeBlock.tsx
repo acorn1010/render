@@ -21,7 +21,7 @@ export function CodeBlock({classes, code, language}: CodeBlockProps) {
           <p>{language}</p>
           <CopyButton className='text-gray-100 hover:bg-gray-600 active:bg-gray-800' value={code} />
         </div>
-        <pre className={cn('!rounded-t-none !mt-0', classes?.pre)}>
+        <pre className={cn('!rounded-t-none !mt-0', language &&  `language-${language}`, classes?.pre)}>
           <code className={cn(`language-${language}`, classes?.code)} ref={codeRef}>{code}</code>
         </pre>
       </div>
