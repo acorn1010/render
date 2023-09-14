@@ -14,13 +14,13 @@ const docs = [
 
 export function Sidebar() {
   return (
-      <div className="flex grow flex-col items-center overflow-y-auto bg-gray-800 min-w-[64px] w-16 lg:w-56 lg:min-w-[224px]">
-        <div className="flex-center h-14 shrink-0 bg-gray-950 w-full z-10">
+      <div className="flex grow flex-col items-center overflow-y-auto bg-slate-900/50 min-w-[64px] w-16 lg:w-56 lg:min-w-[224px] from-slate-950/30 bg-gradient-to-t border-r border-slate-800/50 shadow">
+        <div className="flex-center h-14 shrink-0 w-full z-10">
           <img
               className="h-8 w-auto"
               src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=500"
               alt="Created by Acorn1010"
-          />
+              />
         </div>
         <nav className="flex flex-1 flex-col w-full z-10 relative overflow-hidden pt-5">
           <Background />
@@ -52,9 +52,9 @@ function NavLink({name, to, icon: Icon}: NavLinkProps) {
             to={to}
             className={cn(
                 isCurrent
-                    ? 'bg-gray-600 text-white active:bg-gray-900'
-                    : 'text-gray-300 hover:text-white hover:bg-lighten active:bg-darken',
-                'group flex justify-center lg:justify-start gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold whitespace-nowrap'
+                    ? 'bg-slate-700/70 active:bg-slate-800 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-slate-700/30 active:bg-slate-700/20',
+                'group flex justify-center lg:justify-start gap-x-3 rounded-md p-2 text-sm leading-6 font-normal whitespace-nowrap'
             )}
         >
           <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
@@ -73,9 +73,9 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
             to={to}
             className={cn(
                 isCurrent
-                    ? 'bg-gray-600 text-white active:bg-gray-900'
-                    : 'text-white hover:bg-gray-700 active:bg-gray-900',
-                'group flex-center py-3 gap-x-4 text-base leading-6 font-semibold whitespace-nowrap'
+                    ? 'bg-slate-700/70 text-white active:bg-slate-800'
+                    : 'text-white hover:bg-slate-700/30 active:bg-slate-700',
+                'group flex-center py-3 gap-x-4 text-base leading-6 font-normal whitespace-nowrap'
             )}
         >
           <Icon className={cn("h-6 w-6 shrink-0", !isCurrent && 'group-hover:animate-spin')} aria-hidden="true" />
@@ -88,7 +88,7 @@ function BottomNavLink({name, to, icon: Icon}: NavLinkProps) {
 function Background() {
   return (
       <>
-        <div className='bg-transparent absolute pointer-events-none rotate-[11.25deg] origin-top-left left-full top-0 w-[300%] h-[150%] opacity-50 from-gray-700 bg-gradient-to-b' />
+        <div className='bg-transparent absolute pointer-events-none origin-top-left left-full top-0 w-[300%] h-[150%] opacity-50 from-slate-700 bg-gradient-to-b' />
       </>
   );
 }

@@ -12,7 +12,7 @@ import {cn} from "@/lib/utils";
 
 export function Navbar({className}: {className?: string}) {
   return (
-      <nav className={cn('flex px-4 py-2 bg-gray-900', className)}>
+      <nav className={cn('flex px-4 py-2 bg-slate-900', className)}>
         <span className='grow' />
         <ProfileAvatar />
       </nav>

@@ -20,7 +20,7 @@ const iconStyle = cn`
   text-zinc-500
 
   cursor-pointer
-  hover:bg-zinc-800
+  hover:bg-slate-800
   hover:text-white
-  active:bg-zinc-900
+  active:bg-slate-900
 `;
