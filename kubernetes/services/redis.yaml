@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
         - name: redis-container
-          image: redis/redis-stack-server:latest
+          image: redis/redis-stack-server:6.2.6-v7
           env:
             - name: REDIS_DATA_DIR # Required. Seems to overwrite the ConfigMap
               value: "/mnt/data"

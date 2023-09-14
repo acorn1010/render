@@ -2,6 +2,7 @@
 # Handles application of the Redis Cluster kubectl. Required because ConfigMap needs a password.
 set -e
 
-. ../../.env
+. ../.env
 export REDIS_PASSWORD="${REDIS_PASSWORD}"
-envsubst < ./redis.yaml | kubectl apply -f -
+envsubst < ./redis.yaml | kubectl --kubeconfig ~/.kube/config.hetzner apply -f -
+
