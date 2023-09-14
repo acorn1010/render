@@ -2,14 +2,15 @@ import {FaPlus} from "react-icons/all";
 import {Link} from "wouter";
 import {poll} from "@/api/call";
 import {isLoaded} from "@/state/isLoaded";
-import {Skeleton} from "@/components/base/loading/Skeleton";
 import {SortableTable} from "@/components/tables/SortedTable";
+import { CloneChildren } from "@/components/base/loading/CloneChildren";
+import { Skeleton } from "@/components/base/loading/Skeleton";
 
 export default function DashboardHomePage() {
   const renderCounts = poll.use('getMonthlyRenderCounts');
 
   if (!isLoaded(renderCounts)) {
-    return <Skeleton className='h-32' />
+    return <TableSkeleton rows={10} cols={2}/>
   }
 
   return renderCounts ? <MonthlyRenderTable renderCounts={renderCounts} /> : <EmptyDashboard />;
@@ -34,6 +35,24 @@ function MonthlyRenderTable({renderCounts}: {renderCounts: {month: string, rende
         />
       </div>
   );
+}
+
+function TableSkeleton({rows, cols}:{ rows: number, cols: number}){
+    return (
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="divide-y divide-slate-700 bg-slate-900 rounded-md">
+            <CloneChildren count={rows}>
+                <div className="flex sm:flex-row flex-col p-4 sm:gap-0 gap-3 group">
+                  <CloneChildren count={cols}>
+                    <div className="sm:flex-1 odd:w-48 w-24 sm:w-full px-2">
+                      <Skeleton className="sm:h-5 h-4 sm:group-odd:w-48 sm:w-24 bg-slate-700"/>
+                    </div>
+                    </CloneChildren>
+                </div>
+            </CloneChildren>
+          </div>
+        </div>
+    )
 }
 
 function EmptyDashboard() {
