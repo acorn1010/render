@@ -2,7 +2,7 @@
 hetzner_token: $HETZNER_TOKEN
 cluster_name: $CLUSTER_NAME
 kubeconfig_path: "./kubeconfig"
-k3s_version: v1.21.3+k3s1
+k3s_version: $K3S_VERSION
 public_ssh_key_path: "~/.ssh/id_rsa.pub"
 private_ssh_key_path: "~/.ssh/id_rsa.pem"
 ssh_allowed_networks:

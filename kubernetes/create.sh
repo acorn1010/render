@@ -20,6 +20,7 @@ echo "Creating cluster..."
 # Load environment variables
 . .env
 export HETZNER_TOKEN="${HETZNER_TOKEN}"
+export K3S_VERSION="${K3S_VERSION}"
 export CLUSTER_NAME="${CLUSTER_NAME}"
 export CLUSTER_LOCATION="${CLUSTER_LOCATION}"
 export MASTERS_POOL_SIZE="${MASTERS_POOL_SIZE}"
