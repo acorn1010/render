@@ -5,7 +5,7 @@ set -e
 # TODO(acorn1010): Move the rest of this script into the kubernetes/ folder
 export HOST="api.rendermy.site"
 export NAMESPACE="prerender"
-export REPLICAS=9  # Number of server instances to spin up
+export REPLICAS=3  # Number of server instances to spin up
 export CPU="700m"  # Request 0.7 vCPUs
 export MEMORY="1.7Gi"  # Request 1.7 GiB of RAM
 
@@ -24,7 +24,7 @@ VERSION=$(date +"%Y.%m.%d_%H.%M.%S")
 (cd src; npm install && npm run build)
 
 # Build Docker image. We navigate up to our parent directory so that we can include the shared/ library.
-(cd ..; docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:"${VERSION}" --progress=plain -f server/Dockerfile .)
+(cd ..; docker build --platform linux/amd64 -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:"${VERSION}" --progress=plain -f server/Dockerfile .)
 
 # Deploy to container registry. If this fails, you may need to run the below command:
 #  gcloud auth configure-docker
@@ -35,4 +35,5 @@ docker push ${DOCKER_IMAGE}:latest
 export DOCKER_IMAGE="${DOCKER_IMAGE}:${VERSION}"
 export GCR_SECRET="${GCR_SECRET}"  # Needed so that K3s can pull the docker image
 
-envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig=../kubernetes/kubeconfig apply -f -
+kubeConfig=~/.kube/config.joes
+envsubst < ../kubernetes/templates/deployment.yaml | kubectl --kubeconfig "${kubeConfig}" apply -f -
